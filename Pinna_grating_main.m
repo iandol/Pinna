@@ -15,7 +15,7 @@ spb = KbName('downarrow');
 screenNumber = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
 distance = 36.5;
-windowed = [];
+windowed = [0 0 1000 1000];
 backgroundColor = [0.5 0.5 0.5];
 approach = 1;%[0 1]; % simulate approaching (1) or leaving (0)
 % directions = [0 1]; % whether the inner ring has CW (0) or CCW (1) rotational direction when approaching, equivalently CCW (0) or CW (1) when leaving
@@ -122,14 +122,14 @@ try
 	% screen areas
 	xc = (1:2).*wrect(3)/3; %match -only have A and B
 	yc = wrect(4)/2;
-	r1Match = round(45.0/sizePixel);%30mm/0.25=120pixels ;max radius at match
+	r1Match = round(45.0/sizePixel); %30mm/0.25=120pixels ;max radius at match
 	
 	%procedural gabor
-	sizeGabor = 301;
-	phase = 0;
-	sc = 10.0;
-	freq = .05;
-	contrast = 10;
+	sizeGabor		= 301;
+	phase				= 0.0;
+	sc					= 10.0;
+	freq				= 0.05;
+	contrast		= 10;
 	aspectratio = 1.0;
 	%mypars = repmat([phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]', 1, ngabors);
 	gabortex = CreateProceduralGabor(w, sizeGabor, sizeGabor, 1);
@@ -206,7 +206,6 @@ try
 	end
 	%----------------------
 	
-	HideCursor;
 	Screen('FillRect',w,gray,[]);
 	normBoundsRect = Screen('TextBounds', w, 'Please fix at the central point.');
 	Screen('DrawText',w,'Please fix at the central point.',xCen-normBoundsRect(3)/2,yCen-normBoundsRect(4)/2);
@@ -453,21 +452,22 @@ try
 % 					end %9
 % 				end %8
 				
-% 				if is_mask_outer == 1
-% 					Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 0]);
-% 					Screen('DrawTexture',w,masktex);
-% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-% 				end
-% 				if is_mask_inner == 1
-% 					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-% 					Screen('DrawTexture',w,masktex2);
-% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-% 				end
-% 				if is_binary_mask
-% 					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-% 					Screen('DrawTexture',w,masktex11);
-% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-% 				end
+				if is_mask_outer == 1
+					Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 0]);
+					Screen('DrawTexture',w,masktex);
+					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+				end
+				if is_mask_inner == 1
+					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
+					Screen('DrawTexture',w,masktex2);
+					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+				end
+				if is_binary_mask
+					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
+					Screen('DrawTexture',w,masktex11);
+					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+				end
+				
 				Screen('FillOval',w,fixColor,[xCen-0.5*fixSide,yCen-0.5*fixSide,xCen+0.5*fixSide,yCen+0.5*fixSide]);
 				Screen('DrawingFinished', w);
 				
