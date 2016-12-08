@@ -1,21 +1,25 @@
-function Pinna_grating_main(angle_pattern,move_speed_i,angle_speed_i,ResultDir,one_trials,duration,match_time,is_binary_mask,mask_diameter,mask_xpos,mask_ypos)
+function Pinna_grating_main(angle_pattern,move_speed_i,...
+	angle_speed_i,ResultDir,one_trials,duration,...
+	match_time,is_binary_mask,mask_diameter,mask_xpos,...
+	mask_ypos,calib_file)
 
 global sM ana w wrect ifi waitFrames ang1 ang2 white black gray  approach spa spb r1Origin abandon move_speed...
 	ok  xc yc ovalRect r1Match  eleTexMatch1  txtColorMat shiftAng1  onFrames numChoice angSpeed1 ppd
 
 PsychDefaultSetup(2);
-Screen('Preference', 'SkipSyncTests', 2)
+Screen('Preference', 'SkipSyncTests', 1)
 KbName('UnifyKeyNames');
 esc = KbName('escape');
-if ispc; ok = KbName('return'); else; ok = KbName('enter'); end
-spa = KbName('uparrow');
-spb = KbName('downarrow');
+if ispc; ok = KbName('uparrow'); else; ok = KbName('uparrow'); end
+spa = KbName('leftarrow');
+
+spb = KbName('rightarrow');
 
 % viewing parameters ------------------------------------------------------
 screenNumber = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
-distance = 36.5;
-windowed = [0 0 1000 1000];
+distance = 56.5;
+windowed = [];
 backgroundColor = [0.5 0.5 0.5];
 approach = 1;%[0 1]; % simulate approaching (1) or leaving (0)
 % directions = [0 1]; % whether the inner ring has CW (0) or CCW (1) rotational direction when approaching, equivalently CCW (0) or CW (1) when leaving
@@ -97,18 +101,27 @@ ana.mask_ypos = mask_ypos;
 try
 	%-----------------------open the PTB screens------------------------
 	%Screen('BlendFunction', w, GL_ONE, GL_ONE);
+	calibrationFile=load(calib_file);
+	if isstruct(calibrationFile) %older matlab version bug wraps object in a structure
+		calibrationFile = calibrationFile.c;
+	else 
+		calibrationFile = [];
+	end
 	sM = screenManager('verbose',false,'blend',true,'screen',screenNumber,...
 		'pixelsPerCm',pixelsPerCm,...
 		'distance',distance,'bitDepth','FloatingPoint32BitIfPossible',...
 		'debug',false,'antiAlias',0,'nativeBeamPosition',0, ...
-		'srcMode','GL_SRC_ALPHA','dstMode','GL_ONE_MINUS_SRC_ALPHA',...
+		'srcMode','GL_ONE','dstMode','GL_ZERO',...
 		'windowed',windowed,'backgroundColour',[backgroundColor 0],...
 		'gammaTable', calibrationFile); %use a temporary screenManager object
 	screenVals = open(sM); %open PTB screen
 	w = sM.win;
 	wrect = sM.winRect;
+	xCen = sM.xCenter;
+	yCen = sM.yCenter;
 	ifi = sM.screenVals.ifi;
 	ppd = sM.ppd;
+	sizePixel = 10/sM.pixelsPerCm;
 	
 	% screen
 	white = sM.screenVals.white;
@@ -129,8 +142,8 @@ try
 	phase				= 0.0;
 	sc					= 10.0;
 	freq				= 0.05;
-	contrast		= 10;
-	aspectratio = 1.0;
+	contrast			= 10;
+	aspectratio		= 1.0;
 	%mypars = repmat([phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]', 1, ngabors);
 	gabortex = CreateProceduralGabor(w, sizeGabor, sizeGabor, 1);
 	
@@ -212,7 +225,7 @@ try
 	Screen('Flip',w);
 	WaitSecs(2);
 	
-	Screen('FillOval',w,fixColor,[xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2]);
+	sM.drawCross(0.4, [0 0 0 1]);
 	Screen('Flip',w);
 	WaitSecs(1);
 	iii = 1;
@@ -431,44 +444,44 @@ try
 				
 				mypars = repmat([phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]', 1, length(ang1));
 				
-				Screen('DrawTextures', w, gabortex, [], dstRect1, 180*(mod(ang1+(ii-1)*shiftAng,2*pi))/pi, [], [], [], [], kPsychDontDoRotation, mypars);
-				%Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect1,180*(mod(ang1+(ii-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect2,180*(mod(ang2+(jj-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect3,180*(mod(ang1+(kk-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect4,180*(mod(ang2+(ll-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect5,180*(mod(ang1+(mm-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect6,180*(mod(ang2+(nn-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect7,180*(mod(ang1+(oo-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 				if num_rings >=8
-% 					Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect8,180*(mod(ang2+(pp-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 					if num_rings >=9
-% 						Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect9,180*(mod(ang1+(qq-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 						if num_rings >=10
-% 							Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect10,180*(mod(ang2+(rr-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 							if num_rings >=11
-% 								Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect11,180*(mod(ang1+(ss-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-% 							end %11
-% 						end  %10
-% 					end %9
-% 				end %8
+%				Screen('DrawTextures', w, gabortex, [], dstRect1, 180*(mod(ang1+(ii-1)*shiftAng,2*pi))/pi, [], [], [], [], kPsychDontDoRotation, mypars);
+				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect1,180*(mod(ang1+(ii-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect2,180*(mod(ang2+(jj-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect3,180*(mod(ang1+(kk-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect4,180*(mod(ang2+(ll-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect5,180*(mod(ang1+(mm-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect6,180*(mod(ang2+(nn-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect7,180*(mod(ang1+(oo-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+				if num_rings >=8
+					Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect8,180*(mod(ang2+(pp-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+					if num_rings >=9
+						Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect9,180*(mod(ang1+(qq-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+						if num_rings >=10
+							Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect10,180*(mod(ang2+(rr-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+							if num_rings >=11
+								Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRect11,180*(mod(ang1+(ss-1)*shiftAng,2*pi))/pi,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+							end %11
+						end  %10
+					end %9
+				end %8
 				
-				if is_mask_outer == 1
-					Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 0]);
-					Screen('DrawTexture',w,masktex);
-					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-				end
-				if is_mask_inner == 1
-					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-					Screen('DrawTexture',w,masktex2);
-					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-				end
-				if is_binary_mask
-					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-					Screen('DrawTexture',w,masktex11);
-					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-				end
+% 				if is_mask_outer == 1
+% 					Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 0]);
+% 					Screen('DrawTexture',w,masktex);
+% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+% 				end
+% 				if is_mask_inner == 1
+% 					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
+% 					Screen('DrawTexture',w,masktex2);
+% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+% 				end
+% 				if is_binary_mask
+% 					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
+% 					Screen('DrawTexture',w,masktex11);
+% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+% 				end
 				
-				Screen('FillOval',w,fixColor,[xCen-0.5*fixSide,yCen-0.5*fixSide,xCen+0.5*fixSide,yCen+0.5*fixSide]);
+				sM.drawCross(0.4, [0 0 0 1]);
 				Screen('DrawingFinished', w);
 				
 				if approach ==1
@@ -645,10 +658,12 @@ try
 				iii = iii+1;
 			end
 			
-			Screen('FillRect',w,gray,[]);
-			Screen('FillOval',w,fixColor,[xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2]);
-			Screen('Flip',w);
-			WaitSecs(1); % wait for 1 seconds
+			if sM.isOpen
+				sM.drawBackground();
+				sM.drawCross(0.4, [0 0 0 1]);
+				Screen('Flip',w);
+				WaitSecs(1); % wait for 1 seconds
+			end
 			
 		else
 			break;
@@ -656,13 +671,15 @@ try
 	end
 	
 	save([ResultDir '\' 'data'],'ana');
+	close(sM);
 	Screen('CloseAll');
 	ShowCursor;
 catch ME
+	close(sM);
 	Screen('CloseAll');sca
+	ListenChar(0);
 	Priority(0);
-	psychrethrow(psychlasterror);
-	ple(ME)
+	getReport(ME)
 end
 
 return;

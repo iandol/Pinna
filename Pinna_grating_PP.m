@@ -22,7 +22,7 @@ function varargout = Pinna_grating_PP(varargin)
 
 % Edit the above text to modify the response to help Pinna_grating_PP
 
-% Last Modified by GUIDE v2.5 23-Nov-2016 15:53:28
+% Last Modified by GUIDE v2.5 08-Dec-2016 18:58:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -103,8 +103,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function one_trials_Callback(hObject, eventdata, handles)
 % hObject    handle to one_trials (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -143,8 +141,8 @@ is_binary_mask = get(handles.is_binary_mask,'Value');
 mask_diameter= str2num(get(handles.mask_diameter,'String'));
 mask_xpos = str2num(get(handles.mask_xpos,'String'));
 mask_ypos = str2num(get(handles.mask_ypos,'String'));
-Pinna_grating_main(angle_pattern,move_speed_i,angle_speed_i,ResultDir,one_trials,duration,match_time,is_binary_mask,mask_diameter,mask_xpos,mask_ypos);
-
+calib_file = get(handles.gamma_path,'String');
+Pinna_grating_main(angle_pattern,move_speed_i,angle_speed_i,ResultDir,one_trials,duration,match_time,is_binary_mask,mask_diameter,mask_xpos,mask_ypos,calib_file);
 
 % --- Executes on button press in analysis.
 function analysis_Callback(hObject, eventdata, handles)
@@ -195,8 +193,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function match_time_Callback(hObject, eventdata, handles)
 % hObject    handle to match_time (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -226,7 +222,6 @@ function select_common_path_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 CommonDirName = uigetdir();
 set(handles.common_path,'String',CommonDirName);
-
 
 function common_path_Callback(hObject, eventdata, handles)
 % hObject    handle to common_path (see GCBO)
@@ -423,6 +418,37 @@ function mask_ypos_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function mask_ypos_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to mask_ypos (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in select_gamma.
+function select_gamma_Callback(hObject, eventdata, handles)
+% hObject    handle to select_gamma (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[f,p] = uigetfile();
+set(handles.gamma_path,'String',[p f]);
+
+
+function gamma_path_Callback(hObject, eventdata, handles)
+% hObject    handle to gamma_path (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of gamma_path as text
+%        str2double(get(hObject,'String')) returns contents of gamma_path as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function gamma_path_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gamma_path (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 

@@ -1,6 +1,6 @@
 function ProceduralPinna
 PsychDefaultSetup(2);
-Screen('Preference', 'SkipSyncTests', 2)
+Screen('Preference', 'SkipSyncTests', 1)
 
 % Set number of gabor patches to 200 if no number provided:
 if nargin < 1 || isempty(ngabors)
@@ -18,7 +18,7 @@ screenid = max(Screen('Screens'));
 % abort if your graphics hardware is not capable of any of this.
 PsychImaging('PrepareConfiguration');
 PsychImaging('AddTask', 'General', 'FloatingPoint32BitIfPossible');
-[win, winRect] = PsychImaging('OpenWindow', screenid, 0.5,[0 0 1000 1000 ]);
+[win, winRect] = PsychImaging('OpenWindow', screenid, 0.5);
 
 % Retrieve size of window in pixels, need it later to make sure that our
 % moving gabors don't move out of the visible screen area:

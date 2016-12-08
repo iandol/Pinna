@@ -1,8 +1,7 @@
 function Pinna_grating_match(condition,match_time)
-global w wrect ifi waitFrames  ang1 ang2  black   spa spb spc  onFrames approach r1Origin abandon ...
+global sM w wrect ifi waitFrames ang1 ang2  black spa spb spc  onFrames approach r1Origin abandon ...
     ok  xc yc ovalRect r1Match  eleTexMatch1 txtColorMat  numChoice  ppd
 
-Screen('Preference', 'SkipSyncTests', 1)
 KbName('UnifyKeyNames');
 esc = KbName('escape');
 abandon = 0;
@@ -137,9 +136,7 @@ while vbl < vblendtime
         %area2
         dstRect6b  = [xc(2)+r6*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side6P(1)/2;...
             xc(2)+r6*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(1)/2];
-    end
-    
-    
+	 end
     
     dstRect1 = [dstRect1a dstRect1b];
     Screen('DrawTextures',w,eleTexMatch1,[],dstRect1,[(180/pi)*(mod(ang1+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang1+(ii-1)*shiftAng(2),2*pi))],...
@@ -176,7 +173,7 @@ while vbl < vblendtime
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    Screen('FillOval',w,black,ovalRect);
+    sM.drawCross(0.4,[0 0 0 1]);
     
     Screen('DrawText',w,'a',wrect(3)/3,wrect(4)/2+200,colorMat(1,:));
     
@@ -197,9 +194,7 @@ while vbl < vblendtime
         break;
     end
     
-    [~,~,keycode] = KbCheck;
     if keycode(esc)
-        Screen('CloseAll');
         ShowCursor;
         break;
     end
