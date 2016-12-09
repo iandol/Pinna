@@ -138,6 +138,7 @@ while vbl < vblendtime
             xc(2)+r6*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(1)/2];
 	 end
     
+	 Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 1]);
     dstRect1 = [dstRect1a dstRect1b];
     Screen('DrawTextures',w,eleTexMatch1,[],dstRect1,[(180/pi)*(mod(ang1+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang1+(ii-1)*shiftAng(2),2*pi))],...
         1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
@@ -165,7 +166,8 @@ while vbl < vblendtime
         dstRect6 = [dstRect6a dstRect6b];
         Screen('DrawTextures',w,eleTexMatch1,[],dstRect6,[(180/pi)*(mod(ang2+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang2+(ii-1)*shiftAng(2),2*pi))],...
             1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-    end
+	 end
+	 Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
     
     ii = ii+1;
     
@@ -191,7 +193,7 @@ while vbl < vblendtime
     end
     
     if keycode(ok) & flag == 1
-        break;
+       break;
     end
     
     if keycode(esc)

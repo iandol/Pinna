@@ -231,7 +231,7 @@ try
 		count = 0;
 		vblendtime = vbl + eachConditionSecs;
 		%-----------
-		while vbl < vblendtime
+		while GetSecs < vblendtime
 			
 			count = count + 1;
 			
@@ -469,7 +469,7 @@ try
 		end
 		if benchmark > 0
 			avgfps = count / (GetSecs - ts);
-			fprintf('---> The average FPS was: %f fps.\n',avgfps);
+			fprintf('--->>> The average FPS was: %f fps.\n',avgfps);
 		end
 	end
 	%save result .mat

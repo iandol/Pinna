@@ -254,7 +254,7 @@ try
 		count = 0;
 		vblendtime = vbl + eachConditionSecs;
 		%-----------
-		while vbl < vblendtime
+		while GetSecs < vblendtime
 			
 			count = count + 1;
 			

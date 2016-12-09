@@ -162,7 +162,7 @@ function demo_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 is_with_line  = get(handles.is_with_line,'Value');
 benchmark  = get(handles.benchmark_demo,'Value');
-Pinna_grating_withline(is_with_line,benchmark);
+Pinna_grating_withlineO(is_with_line,benchmark);
 
 % --- Executes on button press in is_with_line.
 function is_with_line_Callback(hObject, eventdata, handles)
@@ -459,16 +459,12 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on button press in proceduraldemo.
 function proceduraldemo_Callback(hObject, eventdata, handles)
-% hObject    handle to proceduraldemo (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in benchmark_demo.
-function benchmark_demo_Callback(hObject, eventdata, handles)
 is_with_line  = get(handles.is_with_line,'Value');
 benchmark  = get(handles.benchmark_demo,'Value');
 Pinna_grating_withlineP(is_with_line,benchmark);
+
+% --- Executes on button press in benchmark_demo.
+function benchmark_demo_Callback(hObject, eventdata, handles)
+

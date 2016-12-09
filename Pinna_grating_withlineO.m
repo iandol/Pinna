@@ -280,7 +280,7 @@ try
 		xy2(2,2:2:end) = -800 * cos(ang2);
 		
 		%-----------
-		while vbl < vblendtime
+		while GetSecs < vblendtime
 			
 			count = count + 1;
 			

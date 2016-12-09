@@ -3,25 +3,52 @@ function Pinna_grating_main(angle_pattern,move_speed_i,...
 	match_time,is_binary_mask,mask_diameter,mask_xpos,...
 	mask_ypos,calib_file)
 
-global sM ana w wrect ifi waitFrames ang1 ang2 white black gray  approach spa spb r1Origin abandon move_speed...
-	ok  xc yc ovalRect r1Match  eleTexMatch1  txtColorMat shiftAng1  onFrames numChoice angSpeed1 ppd
+global eL sM ana w wrect ifi waitFrames ang1 ang2 ...
+	white black grey approach spa spb r1Origin abandon move_speed...
+	ok ckey xc yc ovalRect r1Match  eleTexMatch1  txtColorMat ...
+	shiftAng1  onFrames numChoice angSpeed1 ppd
 
+if nargin == 0; error('No parameters passed');end
+
+ians = inputdlg({'Subject Name','Comments (room, lights etc.)'});
+ana.subject = ians{1};
+ana.comments = ians{2};
+useEyeLink = false;
+isDummy = false;
 PsychDefaultSetup(0);
 Screen('Preference', 'SkipSyncTests', 2)
 KbName('UnifyKeyNames');
 esc = KbName('escape');
-if ispc; ok = KbName('uparrow'); else; ok = KbName('uparrow'); end
+ok = KbName('uparrow');
 spa = KbName('leftarrow');
 spb = KbName('rightarrow');
+ckey = KbName('c');
+numChoice = 0;
+
+%--------------fix parameters
+fixX = 0;
+fixY = 0;
+firstFixInit = 0.5;
+firstFixTime = 2;
+firstFixRadius = 1;
+strictFixation = true;
+
+%----------------Make a name for this run-----------------------
+pf='PINNA_';
+nameExp = [pf ana.subject];
+c = sprintf(' %i',fix(clock()));
+c = regexprep(c,' ','_');
+nameExp = [nameExp c];
 
 % viewing parameters ------------------------------------------------------
-screenNumber = max(Screen('Screens'));%-1;
+screenID = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
 distance = 56.5;
 windowed = [800 800];
 backgroundColor = [0.5 0.5 0.5];
+
 % viewing parameters ------------------------------------------------------
-stdDis = 565; %mm
+stdDis = distance*10; %mm
 approach = 1;%[0 1]; % simulate approaching (1) or leaving (0)
 % directions = [0 1]; % whether the inner ring has CW (0) or CCW (1) rotational direction when approaching, equivalently CCW (0) or CW (1) when leaving
 % speeds = 200;  % translation speed, in mm/sec
@@ -53,7 +80,7 @@ r1 = 0.4; % in degree
 fixSide = 8;% radius of fixation point is 8 pixel
 fixColor = 0;  %black
 
-sizePixel = 0.28;   %in mm, calculated from different Screen  ,has different value
+sizePixel = 10 / pixelsPerCm;   %in mm, calculated from different Screen  ,has different value
 
 % %%%%%%%%%%%%%%%arrange angle ,10*5 = 50
 % AngleArray = [];
@@ -82,7 +109,8 @@ for i = 1:trials
 	rotation_speed_index(i) = fix(rem(column_rank(i)-1,(one_trials * num_move_speed))/(one_trials)) + 1;   %value is 1~num_rotation_speed
 	move_speed_index = rotation_speed_index;%value is 1~num_move_speed And num_rotation_speed = num_move_speed; because one-to-one
 end
-%------------
+
+%===================================================
 %global struct ana to save para
 ana.angle_index = pattern_angle_index;
 ana.move_speed_index = move_speed_index;
@@ -99,16 +127,23 @@ ana.is_binary_mask = is_binary_mask;
 ana.mask_diameter = mask_diameter;
 ana.mask_xpos = mask_xpos;
 ana.mask_ypos = mask_ypos;
-%--------------------------------------------------------------------------
+ana.fixX = fixX;
+ana.fixY = fixY;
+ana.firstFixInit = firstFixInit;
+ana.firstFixTime = firstFixTime;
+ana.firstFixRadius = firstFixRadius;
+ana.strictFixation = strictFixation;
+%======================================================
+
 try
 	white = WhiteIndex(screenID);
 	black = BlackIndex(screenID);
-	grey = (white+black)/2; % index for white, black and gray
+	grey = (white+black)/2; % index for white, black and grey
 	if grey == white
 		grey = white/2;
 	end
 	inc = white-grey;
-	[w,wrect] = Screen('OpenWindow',screenID,grey,[]);
+	[w,wrect] = Screen('OpenWindow',screenID,grey,[0 0 800 800]);
 	ifi = Screen('GetFlipInterval',w);
 	halfisi = ifi/2;
 	xCen = wrect(3)/2;
@@ -117,11 +152,44 @@ try
 	ppd = wrect(3)/2/atand(ScreenWidth/2/stdDis);
 	[os,od,oc]=Screen('BlendFunction',w);
 	
+	
+	%==============================setup eyelink==========================
+	sM = screenManager;
+	sM.screen = screenID;
+	sM.pixelsPerCm = pixelsPerCm;
+	sM.distance = distance;
+	sM.backgroundColour = backgroundColor;
+	sM.forceWin(w);
+	if useEyeLink == true
+		%----------------eyetracker settings-------------------------
+		eL = eyelinkManager('IP',[]);
+		%eL.verbose = true;
+		eL.isDummy = isDummy; %use dummy or real eyelink?
+		eL.name = nameExp;
+		eL.saveFile = [nameExp '.edf'];
+		eL.recordData = true; %save EDF file
+		eL.sampleRate = 500;
+		eL.remoteCalibration = false; % manual calibration?
+		eL.calibrationStyle = 'HV5'; % calibration style
+		eL.modify.calibrationtargetcolour = [1 1 1];
+		eL.modify.calibrationtargetsize = 0.6;
+		eL.modify.calibrationtargetwidth = 0.02;
+		eL.modify.waitformodereadytime = 500;
+		eL.modify.devicenumber = -1; % -1 = use any keyboard
+		% X, Y, FixInitTime, FixTime, Radius, StrictFix
+		updateFixationValues(eL, fixX, fixY, firstFixInit, firstFixTime, firstFixRadius, strictFixation);
+		initialise(eL, sM);
+		setup(eL);
+		WaitSecs(0.5);
+		getSample(eL);
+	else
+		eL = [];
+	end
+	
 	% screen areas
 	xc = (1:2).*wrect(3)/3; %match -only have A and B
 	yc = wrect(4)/2;
 	r1Match = round(45.0/sizePixel); %30mm/0.25=120pixels ;max radius at match
-	
 	
 	%%%%%%% 3 fixPoint
 	fixRect = [xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2];
@@ -138,7 +206,7 @@ try
 		mask_diameter = mask_diameter * ppd;
 		radius = mask_diameter/2; %diameter to radius
 		masksize = [wrect(4),wrect(3)];
-		mask = ones(masksize(1),masksize(2),2)*gray;
+		mask = ones(masksize(1),masksize(2),2)*grey;
 		[x1,y1] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
 		mask(:,:,2) = white*((x1-mask_xpos).^2 + (y1-mask_ypos).^2 <=(radius).^2);
 		masktex11 = Screen('MakeTexture', w, mask);
@@ -169,7 +237,7 @@ try
 		a1=cos(angle1)*f;
 		b1=sin(angle1)*f;
 		m1=exp(-((x/grating_size).^2)-((y/grating_size).^2)).*sin(a1*x+b1*y-5);
-		AllElements(1,jj).eleTex1P = Screen('MakeTexture',w,gray+inc*m1);    %CCW
+		AllElements(1,jj).eleTex1P = Screen('MakeTexture',w,grey+inc*m1);    %CCW
 		
 	end
 	%%%%%%%%%%%%%%%%%%%%%%outside mask & inside mask
@@ -179,7 +247,7 @@ try
 	
 	if is_mask_outer == 1
 		masksize = [wrect(4)/4,wrect(3)/4];
-		mask = ones(masksize(1),masksize(2),2)*gray;
+		mask = ones(masksize(1),masksize(2),2)*grey;
 		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
 		mask(:, :, 2)=white *(exp(-((x-xCen).^2+(y-yCen).^2)/(maskouter_radius)^2)); % gaussian mask
 		mask(mask>white)=white;
@@ -187,7 +255,7 @@ try
 	end
 	if is_mask_inner == 1
 		masksize = [wrect(4)/4,wrect(3)/4];
-		mask2 = ones(masksize(1),masksize(2),2)*gray;
+		mask2 = ones(masksize(1),masksize(2),2)*grey;
 		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
 		mask2(:, :, 2)=white * (1-exp(-((x-xCen).^2+(y-yCen).^2)/((maskinner_radius)*2)^2)); % gaussian mask
 		mask2(mask2>white)=white;
@@ -196,19 +264,70 @@ try
 	end
 	%----------------------
 	
-	Screen('FillRect',w,gray,[]);
+	Screen('FillRect',w,grey,[]);
 	normBoundsRect = Screen('TextBounds', w, 'Please fix at the central point.');
 	Screen('DrawText',w,'Please fix at the central point.',xCen-normBoundsRect(3)/2,yCen-normBoundsRect(4)/2);
+	Screen('FillOval',w,fixColor,fixRect);
 	Screen('Flip',w);
 	WaitSecs(2);
 	
-	Screen('FillOval',w,fixColor,fixRect);
-	Screen('Flip',w);
 	WaitSecs(1);
 	iii = 1;
 	breakLoop = false;
+	
+	%%%%%%%%%%%%%%%%%%%%%%--WE LOOP BABY--%%%%%%%%%%%%%%%%%%%%%%%%%
 	while ~breakLoop
-		if iii<=trials
+		
+		%======================initialise eyelink and draw fix spaot================
+		if useEyeLink
+			resetFixation(eL);
+			updateFixationValues(eL, fixX, fixY, firstFixInit, firstFixTime, firstFixRadius, strictFixation);
+			trackerClearScreen(eL);
+			trackerDrawFixation(eL); %draw fixation window on eyelink computer
+			trackerDrawStimuli(eL,ts);
+			edfMessage(eL,'V_RT MESSAGE END_FIX END_RT');  %this 3 lines set the trial info for the eyelink
+			edfMessage(eL,['TRIALID ' num2str(task.totalRuns)]);  %obj.getTaskIndex gives us which trial we're at
+			edfMessage(eL,['UUID ' currentUUID]); %add a unique ID
+			edfMessage(eL,['MSG:MASKDELAY ' num2str(maskDelay)]); %add in the delay of the current state for good measure
+			startRecording(eL);
+			statusMessage(eL,'INITIATE FIXATION...');
+			fixated = '';
+			syncTime(eL);
+			while ~strcmpi(fixated,'fix') && ~strcmpi(fixated,'breakfix')
+				drawCross(sM,0.4,[0 0 0 1],fixX,fixY);
+				tFix = Screen('Flip',s.win); %flip the buffer
+				getSample(eL);
+				fixated=testSearchHoldFixation(eL,'fix','breakfix');
+				[keyIsDown, ~, keyCode] = KbCheck(-1);
+				if keyIsDown == 1
+					rchar = KbName(keyCode); if iscell(rchar);rchar=rchar{1};end
+					switch lower(rchar)
+						case {'c'}
+							fixated = 'breakfix';
+							stopRecording(eL);
+							setOffline(eL);
+							trackerSetup(eL);
+							WaitSecs(2);
+						case {'d'}
+							fixated = 'breakfix';
+							stopRecording(eL);
+							driftCorrection(eL);
+							WaitSecs(2);
+						case {'q'}
+							fixated = 'breakfix';
+							breakloop = true;
+					end
+				end
+			end
+			if strcmpi(fixated,'breakfix'); response = BREAKFIX; end
+		else
+			Screen('FillOval',w,fixColor,fixRect);
+			Screen('Flip',w);
+		end
+		
+		%------Our main stimulus drawing loop
+		while iii<=trials && strcmpi(fixated,'fix') %initial fixation held
+			if useEyeLink; edfMessage(eL,'END_FIX'); statusMessage(eL,'Show Stimulus...'); end
 			waitFrames = 1;
 			angSpeed1 = angle_speed_i(rotation_speed_index(iii));
 			shiftAng1 = pi*(angSpeed1.*ifi)/180;  %degtorad(angSpeed1.*ifi);
@@ -242,27 +361,16 @@ try
 				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%真实旋转
 				condition = 4;
 			end
-			
-			%%%%%Part3 is rotation_speed!=0 && move_speed_index !=0 的情况
-			
+
 			row = 1;
 			column = pattern_angle_index(iii);
-			
-			%------------------------
-			
 			i = 1;  %when only has one ring
-			ii = 1;			jj = 1;
-			kk = 1;			ll = 1;
-			mm = 1;			nn = 1;
-			oo = 1;			pp = 1;
-			qq = 1;			rr = 1;
-			ss = 1;			tt = 1;
-			j = 1;			k = 1;
-			l = 1;			m = 1;
-			n = 1;			o = 1;
-			p = 1;			q = 1;
-			r = 1;			s = 1;
-			t = 1;
+			ii = 1;			jj = 1;			kk = 1;			ll = 1;
+			mm = 1;			nn = 1;			oo = 1;			pp = 1;
+			qq = 1;			rr = 1;			ss = 1;			tt = 1;
+			j = 1;			k = 1;			l = 1;			m = 1;
+			n = 1;			o = 1;			p = 1;			q = 1;
+			r = 1;			s = 1;			t = 1;
 			
 			switch num_rings
 				case 8
@@ -308,19 +416,9 @@ try
 			
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 			if approach ==2   %%每个trial ,ii ,jj ……初始化
-				ii = 1;
-				jj = 1;
-				kk = 1;
-				ll = 1;
-				mm = 1;
-				nn = 1;
-				oo = 1;
-				pp = 1;
-				qq = 1;
-				rr = 1;
-				ss = 1;
-				tt = 1;
-				
+				ii = 1;			jj = 1;			kk = 1;			ll = 1;
+				mm = 1;			nn = 1;			oo = 1;			pp = 1;
+				qq = 1;			rr = 1;			ss = 1;			tt = 1;
 			end
 			
 			r_a = 2*(max_r-r1Origin)/(onFrames)^2;
@@ -425,157 +523,72 @@ try
 				
 				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRectA,aA,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
 				
-				% 				if is_mask_outer == 1
-				% 					Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 0]);
-				% 					Screen('DrawTexture',w,masktex);
-				% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-				% 				end
-				% 				if is_mask_inner == 1
-				% 					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-				% 					Screen('DrawTexture',w,masktex2);
-				% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-				% 				end
-				% 				if is_binary_mask
-				% 					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-				% 					Screen('DrawTexture',w,masktex11);
-				% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-				% 				end
+				if is_mask_outer == 1
+					Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 0]);
+					Screen('DrawTexture',w,masktex);
+					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+				end
+				if is_mask_inner == 1
+					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
+					Screen('DrawTexture',w,masktex2);
+					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+				end
+				if is_binary_mask
+					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
+					Screen('DrawTexture',w,masktex11);
+					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+				end
 				
 				Screen('FillOval',w,fixColor,fixRect);
-% 				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-% 				Screen('DrawTextures', w, gabortex, [], dstRectA, aA, [], [], [], [], kPsychDontDoRotation, allPars);
-% 				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
 				Screen('DrawingFinished', w);
 				
 				if approach == 1
-					i = i+1;
-					if i == onFrames
-						i = 1;
-					end
-					
-					j = j+1;
-					if j == onFrames
-						j = 1;
-					end
-					
-					k = k+1;
-					if k == onFrames
-						k = 1;
-					end
-					
-					l = l+1;
-					if l == onFrames
-						l = 1;
-					end
-					
-					m = m+1;
-					if m == onFrames
-						m = 1;
-					end
-					n = n+1;
-					if n == onFrames
-						n = 1;
-					end
-					o = o+1;
-					if o == onFrames
-						o = 1;
-					end
+					i = i+1; if i == onFrames;	i = 1; end				
+					j = j+1;	if j == onFrames;	j = 1; end
+					k = k+1;	if k == onFrames;	k = 1; end
+					l = l+1;	if l == onFrames;	l = 1; end
+					m = m+1; if m == onFrames;	m = 1; end
+					n = n+1; if n == onFrames;	n = 1; end
+					o = o+1; if o == onFrames;	o = 1; end
 					if num_rings >=8
-						p = p +1;
-						if p == onFrames
-							p = 1;
-						end
+						p = p +1;if p == onFrames;	p = 1;end
 						if num_rings >=9
-							q = q +1;
-							if q == onFrames
-								q = 1;
-							end
+							q = q +1;if q == onFrames;q = 1;end
 							if num_rings >= 10
-								r = r+1;
-								if r == onFrames
-									r = 1;
-								end
-								
+								r = r+1;if r == onFrames;r = 1;end								
 								if num_rings >=11
-									s = s+1;
-									if s == onFrames
-										s = 1;
-									end
-									
+									s = s+1;if s == onFrames;s = 1;end								
 									if num_rings >=12
-										t = t+1;
-										if t == onFrames
-											t = 1;
-										end
+										t = t+1;if t == onFrames;t = 1;end
 									end %12
 								end %11
 							end  %10
 						end   %9
 					end  %8
 				elseif approach == 0
-					i = i-1;
-					if i == 0
-						i = onFrames;
-					end
+					i = i-1;if i == 0;i = onFrames;end
 					if num_rings>=2
-						j = j-1;
-						if j == 0
-							j = onFrames;
-						end
+						j = j-1;if j == 0;j = onFrames;end
 						if num_rings >=3
-							k = k-1;
-							if k == 0
-								k = onFrames;
-							end
+							k = k-1;if k == 0;k = onFrames;end
 							if num_rings >=4
-								l = l-1;
-								if l == 0
-									l = onFrames;
-								end
+								l = l-1;if l == 0;l = onFrames;end
 								if num_rings >=5
-									m = m-1;
-									if m == 0
-										m = onFrames;
-									end
+									m = m-1;if m == 0;m = onFrames;end
 									if num_rings >=6
-										n = n-1;
-										if n == 0
-											n = onFrames;
-										end
+										n = n-1;if n == 0;n = onFrames;end
 										if num_rings >= 7
-											o = o-1;
-											if o == 0
-												o = onFrames;
-											end
+											o = o-1;if o == 0;o = onFrames;end
 											if num_rings >= 8
-												p = p -1;
-												if p==0
-													p = onFrames;
-												end
-												
+												p = p -1;if p==0;p = onFrames;end
 												if num_rings >=9
-													q = q-1;
-													if q == 0
-														q = onFrames;
-													end
-													
+													q = q-1;if q == 0;q = onFrames;end
 													if num_rings >=10
-														r = r-1;
-														if r == 0
-															r =  onFrames;
-														end
-														
+														r = r-1;if r == 0;r = onFrames;end
 														if num_rings >=11
-															s = s-1;
-															if s == 0
-																s = onFrames;
-															end
-															
+															s = s-1;if s == 0;s = onFrames;end
 															if num_rings >=12
-																t = t-1;
-																if t == 0
-																	t = onFrames;
-																end
+																t = t-1;if t == 0;t = onFrames;end
 															end %12
 														end %11
 													end %10
@@ -590,21 +603,30 @@ try
 				end
 				
 				%                 if approach == 2   %  只为了静止时，真实旋转可以实现
-				ii = ii+1;
-				jj = jj+1;
-				kk = kk+1;
-				ll = ll+1;
-				mm = mm+1;
-				nn = nn+1;
-				oo = oo +1;
-				pp = pp+1;
-				qq = qq +1;
-				rr = rr +1;
-				ss = ss +1;
-				tt = tt +1;
+				ii = ii+1;				jj = jj+1;
+				kk = kk+1;				ll = ll+1;
+				mm = mm+1;				nn = nn+1;
+				oo = oo +1;				pp = pp+1;
+				qq = qq +1;				rr = rr +1;
+				ss = ss +1;				tt = tt +1;
 				%                 end
+
+				if useEyeLink
+					getSample(eL);
+					isfix = isFixated(eL);
+					if ~isfix
+						fixated = 'breakfix';
+						break;
+					end
+				end
 				[vbl,~,~,missed] = Screen('Flip',w,vbl+halfifi);
 				if missed>0;fprintf('---!!! Missed frame !!!---\n');end
+			end
+			if ~strcmpi(fixated,'fix')
+				response = -1; 
+				statusMessage(eL,'Subject Broke Fixation!'); 
+				edfMessage(eL,'BreakFix')
+				continue
 			end
 			
 			[~,~,keycode] = KbCheck(-1);
@@ -617,21 +639,18 @@ try
 			if abandon==0   %else restart,and don't save data
 				ana.result(1,iii) = numChoice;
 				iii = iii+1;
+				numChoice = -1;
 			end
-			
-			if sM.isOpen
-				sM.drawBackground();
-				Screen('FillOval',w,fixColor,fixRect);
-				Screen('Flip',w);
-				WaitSecs(1); % wait for 1 seconds
+			if useEyeLink
+				resetFixation(eL);
+				stopRecording(eL);
+				edfMessage(eL,['TRIAL_RESULT ' num2str(numChoice)]);
+				setOffline(eL);
 			end
-			
-		else
-			break;
-		end
+		end % while fix and <iii
 	end
-	
-	save([ResultDir '\' 'data'],'ana');
+	cd(ResultDir);
+	save([nameExp '.mat'],'ana');
 	close(sM);
 	Screen('CloseAll');
 	ShowCursor;
