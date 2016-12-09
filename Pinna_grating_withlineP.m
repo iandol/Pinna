@@ -1,14 +1,21 @@
-function Pinna_grating_withline(is_with_line)
+function Pinna_grating_withlineP(is_with_line,benchmark)
 if ~exist('is_with_line','var');is_with_line=false;end
-PsychDefaultSetup(0);
+if ~exist('benchmark','var');benchmark=false;end
+
+PsychDefaultSetup(2);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
-Screen('Preference', 'SkipSyncTests', 1)
+Screen('Preference', 'SkipSyncTests', 2)
 % screen
 screenID = max(Screen('Screens'));
 
 % viewing parameters ------------------------------------------------------
-stdDis = 600; %mm
+screenNumber = max(Screen('Screens'));%-1;
+pixelsPerCm = 35;
+distance = 56.5;
+stdDis = distance*10; %mm
+windowed = [];
+backgroundColour = [0.5 0.5 0.5 1];
 % one_trials = 5;
 % approach = ones(trials); %[0 1]; % simulate approaching (1) or leaving (0)
 approach = 1;
@@ -30,89 +37,90 @@ num1 = 20;
 %for 1st ring
 offset1 = 0;
 ang1 = mod(offset1+linspace(0,360-360/num1,num1),360);  %
-ang1 = degtorad(ang1); %%
+ang1 = deg2rad(ang1); %%
 offset2 = 180/num1;  % when different rings ,second ring's position is different
 ang2 = mod(offset2+linspace(0,360-360/num1,num1),360);  %
-ang2 = degtorad(ang2); %%
+ang2 = deg2rad(ang2); %%
 
 % radius of ring of elements
-r1 = 0.2; % in degree  %% 初始ring的半径
+r1 = 0.4; % in degree  %% 初始ring的半径
 
 % fixation point rectangle
 fixSide = 8;% radius of fixation point is 8 pixel
 fixColor = 0;  %black
 
-sizePixel = 0.25;   %in mm, calculated from different Screen  ,has different value
+sizePixel = 0.28;   %in mm, calculated from different Screen  ,has different value
 
 %--------------------------------------------------------------------------
 try
-	white = WhiteIndex(screenID);
-	black = BlackIndex(screenID);
-	grey = (white+black)/2; % index for white, black and gray
-	if grey == white
-		grey = white/2;
-	end
-	inc = white-grey;
-	[w,wrect] = Screen('OpenWindow',screenID,grey,[]);
-	ifi = Screen('GetFlipInterval',w);
-	halfisi = ifi/2;
-	xCen = wrect(3)/2;
-	yCen = wrect(4)/2;
-	ScreenWidth = round(wrect(3)*sizePixel);
-	ppd = wrect(3)/2/atand(ScreenWidth/2/stdDis);
+		%-----------------------open the PTB screens------------------------
+	sM = screenManager('verbose',false,'blend',true,'screen',screenNumber,...
+		'pixelsPerCm',pixelsPerCm,...
+		'distance',distance,'bitDepth','FloatingPoint32BitIfPossible',...
+		'debug',false,'antiAlias',0,'nativeBeamPosition',0, ...
+		'srcMode','GL_ONE','dstMode','GL_ZERO',...
+		'windowed',windowed,'backgroundColour',[backgroundColour],...
+		'gammaTable', []); %use a temporary screenManager object
+	screenVals = open(sM); %open PTB screen
+	w = sM.win;
+	wrect = sM.winRect;
+	xCen = sM.xCenter;
+	yCen = sM.yCenter;
+	ifi = sM.screenVals.ifi;
+	halfifi = ifi/2;
+	ppd = sM.ppd;
+	sizePixel = 10/sM.pixelsPerCm;
 	[os,od,oc]=Screen('BlendFunction',w);
 	
-	fixRect = [xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2];
+	% screen
+	white = sM.screenVals.white;
+	black = sM.screenVals.black;
+	gray = (white+black)/2; % index for white, black and gray
+	if gray == white
+		gray = white/2;
+	end
+	inc = white-gray;
 	
 	%procedural gabor
-	sizeGabor		= 301;
-	phase				= 0.0;
-	sc					= 10.0;
-	freq				= 0.05;
-	contrast			= 10;
-	aspectratio		= 1.0;
-	%mypars = repmat([phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]', 1, ngabors);
-	gabortex = CreateProceduralGabor(w, sizeGabor, sizeGabor, 1);
+	degsize = 1;
+	sizeGabor = [degsize*ppd degsize*ppd];
+	phase = 0;
+	sc = 5.0;
+	freq = .06;
+	tilt = 0;
+	contrast = 20.0;
+	aspectratio = 1.0;
+	nonsymmetric = 0;
+	mypars = [phase, freq, sc, contrast, aspectratio, 0, 0, 0]';
+	allPars = repmat(mypars,1,num_rings*num1);
+	gabortex = CreateProceduralGabor(w, sizeGabor(1), sizeGabor(2), nonsymmetric, [0.5 0.5 0.5 0.0]);
 	
-	%make grating texture
-	f=f*2*pi; %used for angle1 and angle2
-	for jj = 1:1   %number of the MakeTexture is 20 ,at least
-		[x,y]=meshgrid(-30:30,-30:30);  %used for angle1 and angle2
-		angle1=(-allAngle1-90)*pi/180;
-		a1=cos(angle1)*f;
-		b1=sin(angle1)*f;
-		m1=exp(-((x/grating_size).^2)-((y/grating_size).^2)).*sin(a1*x+b1*y-5);
-		eleTex1P = Screen('MakeTexture',w,grey+inc*m1);    %CCW
-		
-		%         angle2=(allAngle1(jj)-90)*pi/180;   %
-		%         a2=cos(angle2)*f;
-		%         b2=sin(angle2)*f;
-		%         m2=exp(-((x/grating_size).^2)-((y/grating_size).^2)).*sin(a2*x+b2*y-5);
-		%         AllElements(2,jj).eleTex1P = Screen('MakeTexture',w,gray+inc*m2);    %CW
-		
-	end
-	%%%%%%%%%%%%%%%%%%%%%%outside mask & inside mask
+	Screen('DrawTexture', w, gabortex, [], [], 45+tilt, [], [], [], [], kPsychDontDoRotation, [phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]);
+	sM.flip;
+	WaitSecs(1)
+	
+	fixRect = [xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2];
 	
 	maskinner_radius = maskinner_radius * ppd;% convert degrees to pixels
 	maskouter_radius = maskouter_radius * ppd;% convert degrees to pixels
 	
-	if is_mask_outer == 1
-		masksize = [wrect(4),wrect(3)];
-		mask = ones(masksize(1),masksize(2),2)*grey;
-		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
-		mask(:, :, 2)=white *(exp(-((x-xCen).^2+(y-yCen).^2)/(maskouter_radius)^2)); % gaussian mask
-		mask(mask>white)=white;
-		masktex = Screen('MakeTexture', w, mask);
-	end
-	if is_mask_inner == 1
-		masksize = [wrect(4),wrect(3)];
-		mask2 = ones(masksize(1),masksize(2),2)*grey;
-		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
-		mask2(:, :, 2)=white * (1-exp(-((x-xCen).^2+(y-yCen).^2)/((maskinner_radius)*2)^2)); % gaussian mask
-		mask2(mask2>white)=white;
-		mask2(mask2<30) = black;  %
-		masktex2 = Screen('MakeTexture', w, mask2);
-	end
+% 	if is_mask_outer == 1
+% 		masksize = [wrect(4),wrect(3)];
+% 		mask = ones(masksize(1),masksize(2),2)*gray;
+% 		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
+% 		mask(:, :, 2)=white *(exp(-((x-xCen).^2+(y-yCen).^2)/(maskouter_radius)^2)); % gaussian mask
+% 		mask(mask>white)=white;
+% 		masktex = Screen('MakeTexture', w, mask);
+% 	end
+% 	if is_mask_inner == 1
+% 		masksize = [wrect(4),wrect(3)];
+% 		mask2 = ones(masksize(1),masksize(2),2)*gray;
+% 		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
+% 		mask2(:, :, 2)=white * (1-exp(-((x-xCen).^2+(y-yCen).^2)/((maskinner_radius)*2)^2)); % gaussian mask
+% 		mask2(mask2>white)=white;
+% 		mask2(mask2<30) = black;  %
+% 		masktex2 = Screen('MakeTexture', w, mask2);
+% 	end
 	%----------------------
 	
 	r1Origin = r1 * ppd;% convert degrees to pixels
@@ -127,7 +135,7 @@ try
 	end
 	
 	Priority(MaxPriority(w));
-	Screen('FillRect',w,grey,[]);
+	Screen('FillRect',w,gray,[]);
 	Screen('FillOval',w,fixColor,fixRect);
 	Screen('Flip',w);
 	WaitSecs(1);
@@ -345,19 +353,21 @@ try
 				Screen('Drawlines',w,xy2,1,200,[xCen yCen],[]);
 			end
 			
-			Screen('DrawTextures',w,eleTex1P,[],dstRectA, aA,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-			
+			Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 0]);
+			Screen('DrawTextures', w, gabortex, [], dstRectA, aA, [], [], [], [], kPsychDontDoRotation, allPars);
+			Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+			Screen('DrawingFinished', w);
 			%%%%%%%%************************** add mask
-			if is_mask_outer == 1
-				Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-				Screen('DrawTexture',w,masktex);
-				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-			end
-			if is_mask_inner == 1
-				Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-				Screen('DrawTexture',w,masktex2);
-				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-			end
+% 			if is_mask_outer == 1
+% 				Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
+% 				Screen('DrawTexture',w,masktex);
+% 				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+% 			end
+% 			if is_mask_inner == 1
+% 				Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
+% 				Screen('DrawTexture',w,masktex2);
+% 				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+% 			end
 			%---------------------------------
 			Screen('FillOval',w,fixColor,fixRect);
 			Screen('DrawingFinished', w);
@@ -466,7 +476,7 @@ try
 				ss = ss +1;
 				tt = tt +1;
 			end
-			[vbl,~,~,missed] = Screen('Flip',w,vbl+halfisi);
+			[vbl,~,~,missed] = Screen('Flip',w,vbl+halfifi);
 			if missed>0;fprintf('---!!! Missed frame !!!---\n');end
 			[~,~,keycode] = KbCheck(-1);
 			if keycode(esc)
@@ -481,7 +491,7 @@ try
 	%save result .mat
 	%  save(file.sta_fileName,'ana');
 	%  save('ana');
-	Screen('FillRect',w,grey,[]);
+	Screen('FillRect',w,gray,[]);
 	Screen('FillOval',w,fixColor,fixRect);
 	Priority(0);
 	Screen('Flip',w);

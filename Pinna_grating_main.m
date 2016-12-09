@@ -6,7 +6,7 @@ function Pinna_grating_main(angle_pattern,move_speed_i,...
 global sM ana w wrect ifi waitFrames ang1 ang2 white black gray  approach spa spb r1Origin abandon move_speed...
 	ok  xc yc ovalRect r1Match  eleTexMatch1  txtColorMat shiftAng1  onFrames numChoice angSpeed1 ppd
 
-PsychDefaultSetup(2);
+PsychDefaultSetup(0);
 Screen('Preference', 'SkipSyncTests', 2)
 KbName('UnifyKeyNames');
 esc = KbName('escape');
@@ -20,6 +20,8 @@ pixelsPerCm = 35;
 distance = 56.5;
 windowed = [800 800];
 backgroundColor = [0.5 0.5 0.5];
+% viewing parameters ------------------------------------------------------
+stdDis = 565; %mm
 approach = 1;%[0 1]; % simulate approaching (1) or leaving (0)
 % directions = [0 1]; % whether the inner ring has CW (0) or CCW (1) rotational direction when approaching, equivalently CCW (0) or CW (1) when leaving
 % speeds = 200;  % translation speed, in mm/sec
@@ -31,7 +33,7 @@ is_mask_inner = 1;
 f = 0.05; %grating frequency
 grating_size = 15; %micropattern size (pixel)
 maskinner_radius = 2; %deg
-maskouter_radius = 18; %deg
+maskouter_radius = 10; %deg
 eachConditionSecs = duration; %sec
 % number of elements
 num1 = 20;
@@ -39,10 +41,10 @@ num1 = 20;
 %for 1st ring
 offset1 = 0;
 ang1 = mod(offset1+linspace(0,360-360/num1,num1),360);  %
-ang1 = pi*ang1/180; %degtorad(ang1); %%
+ang1 = deg2rad(ang1);
 offset2 = 180/num1;  % when different rings ,second ring's position is different
 ang2 = mod(offset2+linspace(0,360-360/num1,num1),360);  %
-ang2 = pi*ang2/180; %degtorad(ang2); %%
+ang2 = deg2rad(ang2);
 
 % radius of ring of elements
 r1 = 0.4; % in degree
@@ -51,6 +53,7 @@ r1 = 0.4; % in degree
 fixSide = 8;% radius of fixation point is 8 pixel
 fixColor = 0;  %black
 
+sizePixel = 0.28;   %in mm, calculated from different Screen  ,has different value
 
 % %%%%%%%%%%%%%%%arrange angle ,10*5 = 50
 % AngleArray = [];
@@ -98,65 +101,30 @@ ana.mask_xpos = mask_xpos;
 ana.mask_ypos = mask_ypos;
 %--------------------------------------------------------------------------
 try
-	%-----------------------open the PTB screens------------------------
-	%Screen('BlendFunction', w, GL_ONE, GL_ONE);
-	calibrationFile=load(calib_file);
-	if isstruct(calibrationFile) %older matlab version bug wraps object in a structure
-		calibrationFile = calibrationFile.c;
-	else
-		calibrationFile = [];
+	white = WhiteIndex(screenID);
+	black = BlackIndex(screenID);
+	grey = (white+black)/2; % index for white, black and gray
+	if grey == white
+		grey = white/2;
 	end
-	sM = screenManager('verbose',false,'blend',true,'screen',screenNumber,...
-		'pixelsPerCm',pixelsPerCm,...
-		'distance',distance,'bitDepth','FloatingPoint32BitIfPossible',...
-		'debug',false,'antiAlias',0,'nativeBeamPosition',0, ...
-		'srcMode','GL_ONE','dstMode','GL_ZERO',...
-		'windowed',windowed,'backgroundColour',[backgroundColor 0],...
-		'gammaTable', calibrationFile); %use a temporary screenManager object
-	screenVals = open(sM); %open PTB screen
-	w = sM.win;
-	wrect = sM.winRect;
-	xCen = sM.xCenter;
-	yCen = sM.yCenter;
-	ifi = sM.screenVals.ifi;
-	halfifi = ifi/2;
-	ppd = sM.ppd;
-	sizePixel = 10/sM.pixelsPerCm;
+	inc = white-grey;
+	[w,wrect] = Screen('OpenWindow',screenID,grey,[]);
+	ifi = Screen('GetFlipInterval',w);
+	halfisi = ifi/2;
+	xCen = wrect(3)/2;
+	yCen = wrect(4)/2;
+	ScreenWidth = round(wrect(3)*sizePixel);
+	ppd = wrect(3)/2/atand(ScreenWidth/2/stdDis);
 	[os,od,oc]=Screen('BlendFunction',w);
-	
-	% screen
-	white = sM.screenVals.white;
-	black = sM.screenVals.black;
-	gray = (white+black)/2; % index for white, black and gray
-	if gray == white
-		gray = white/2;
-	end
-	inc = white-gray;
 	
 	% screen areas
 	xc = (1:2).*wrect(3)/3; %match -only have A and B
 	yc = wrect(4)/2;
 	r1Match = round(45.0/sizePixel); %30mm/0.25=120pixels ;max radius at match
 	
-	%procedural gabor
-	degsize = 1;
-	sizeGabor = [degsize*ppd degsize*ppd];
-	phase = 0;
-	sc = 10.0;
-	freq = .06;
-	tilt = 0;
-	contrast = 50.0;
-	aspectratio = 1.0;
-	nonsymmetric = 0;
-	mypars = [phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]';
-	allPars = repmat(mypars,1,num_rings*num1);
-	gabortex = CreateProceduralGabor(w, sizeGabor(1), sizeGabor(2), nonsymmetric, [0.5 0.5 0.5 0.0]);
-	
-	Screen('DrawTexture', w, gabortex, [], [], 45+tilt, [], [], [], [], kPsychDontDoRotation, [phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]);
-	sM.flip;
-	WaitSecs(1)
 	
 	%%%%%%% 3 fixPoint
+	fixRect = [xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2];
 	fixSideMatch = round(1.7/sizePixel);%6;
 	ovalRect = zeros(4,2);
 	ovalRect(1,1:2) = xc-0.5*fixSideMatch;
@@ -234,7 +202,7 @@ try
 	Screen('Flip',w);
 	WaitSecs(2);
 	
-	sM.drawCross(0.4, [0 0 0 1]);
+	Screen('FillOval',w,fixColor,fixRect);
 	Screen('Flip',w);
 	WaitSecs(1);
 	iii = 1;
@@ -455,7 +423,7 @@ try
 					end  %9
 				end   %8
 				
-				%Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRectA,aA,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRectA,aA,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
 				
 				% 				if is_mask_outer == 1
 				% 					Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 0]);
@@ -473,10 +441,10 @@ try
 				% 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
 				% 				end
 				
-				sM.drawCross(0.4, [0 0 0 1]);
-				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-				Screen('DrawTextures', w, gabortex, [], dstRectA, aA, [], [], [], [], kPsychDontDoRotation, allPars);
-				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+				Screen('FillOval',w,fixColor,fixRect);
+% 				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+% 				Screen('DrawTextures', w, gabortex, [], dstRectA, aA, [], [], [], [], kPsychDontDoRotation, allPars);
+% 				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
 				Screen('DrawingFinished', w);
 				
 				if approach == 1
@@ -653,7 +621,7 @@ try
 			
 			if sM.isOpen
 				sM.drawBackground();
-				sM.drawCross(0.4, [0 0 0 1]);
+				Screen('FillOval',w,fixColor,fixRect);
 				Screen('Flip',w);
 				WaitSecs(1); % wait for 1 seconds
 			end
