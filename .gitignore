@@ -1,2 +1,10 @@
 *.asv
-*.m~
+*~
+*.tmp
+._*
+html*
+docs*
+debug.txt
+.DS_Store
+.idea
+.bzrignore

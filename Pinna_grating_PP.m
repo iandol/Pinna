@@ -22,7 +22,7 @@ function varargout = Pinna_grating_PP(varargin)
 
 % Edit the above text to modify the response to help Pinna_grating_PP
 
-% Last Modified by GUIDE v2.5 08-Dec-2016 18:58:33
+% Last Modified by GUIDE v2.5 09-Dec-2016 08:53:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -160,8 +160,9 @@ function demo_Callback(hObject, eventdata, handles)
 % hObject    handle to demo (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
- is_with_line  = get(handles.is_with_line,'Value');
- Pinna_grating_withline(is_with_line);
+is_with_line  = get(handles.is_with_line,'Value');
+benchmark  = get(handles.benchmark_demo,'Value');
+Pinna_grating_withline(is_with_line,benchmark);
 
 % --- Executes on button press in is_with_line.
 function is_with_line_Callback(hObject, eventdata, handles)
@@ -457,3 +458,17 @@ function gamma_path_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in proceduraldemo.
+function proceduraldemo_Callback(hObject, eventdata, handles)
+% hObject    handle to proceduraldemo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in benchmark_demo.
+function benchmark_demo_Callback(hObject, eventdata, handles)
+is_with_line  = get(handles.is_with_line,'Value');
+benchmark  = get(handles.benchmark_demo,'Value');
+Pinna_grating_withlineP(is_with_line,benchmark);

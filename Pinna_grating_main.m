@@ -6,7 +6,7 @@ function Pinna_grating_main(angle_pattern,move_speed_i,...
 global sM ana w wrect ifi waitFrames ang1 ang2 white black gray  approach spa spb r1Origin abandon move_speed...
 	ok  xc yc ovalRect r1Match  eleTexMatch1  txtColorMat shiftAng1  onFrames numChoice angSpeed1 ppd
 
-PsychDefaultSetup(0);
+PsychDefaultSetup(2);
 Screen('Preference', 'SkipSyncTests', 2)
 KbName('UnifyKeyNames');
 esc = KbName('escape');
@@ -139,15 +139,22 @@ try
 	r1Match = round(45.0/sizePixel); %30mm/0.25=120pixels ;max radius at match
 	
 	%procedural gabor
-	sizeGabor		= 71;
-	phase				= 0.0;
-	sc					= 10.0;
-	freq				= 0.05;
-	contrast			= 10;
-	aspectratio		= 1.0;
+	degsize = 1;
+	sizeGabor = [degsize*ppd degsize*ppd];
+	phase = 0;
+	sc = 10.0;
+	freq = .06;
+	tilt = 0;
+	contrast = 50.0;
+	aspectratio = 1.0;
+	nonsymmetric = 0;
 	mypars = [phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]';
 	allPars = repmat(mypars,1,num_rings*num1);
-	gabortex = CreateProceduralGabor(w, sizeGabor, sizeGabor, 1);
+	gabortex = CreateProceduralGabor(w, sizeGabor(1), sizeGabor(2), nonsymmetric, [0.5 0.5 0.5 0.0]);
+	
+	Screen('DrawTexture', w, gabortex, [], [], 45+tilt, [], [], [], [], kPsychDontDoRotation, [phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]);
+	sM.flip;
+	WaitSecs(1)
 	
 	%%%%%%% 3 fixPoint
 	fixSideMatch = round(1.7/sizePixel);%6;
@@ -467,8 +474,8 @@ try
 				% 				end
 				
 				sM.drawCross(0.4, [0 0 0 1]);
-				Screen('BlendFunction',w,GL_ONE,GL_ONE,[1 1 1 1]);
-				Screen('DrawTextures', w, gabortex, [], dstRectA, aA, [], [], [], [], [], allPars);
+				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+				Screen('DrawTextures', w, gabortex, [], dstRectA, aA, [], [], [], [], kPsychDontDoRotation, allPars);
 				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
 				Screen('DrawingFinished', w);
 				
