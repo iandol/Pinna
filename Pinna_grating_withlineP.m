@@ -1,17 +1,18 @@
-function Pinna_grating_withlineP(is_with_line,benchmark)
-if ~exist('is_with_line','var');is_with_line=false;end
-if ~exist('benchmark','var');benchmark=false;end
+function Pinna_grating_withlineP(is_with_line, benchmark)
+if ~exist('is_with_line','var'); is_with_line=false; end
+if ~exist('benchmark','var'); benchmark=false; end
 
 PsychDefaultSetup(2);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
-Screen('Preference', 'SkipSyncTests', 2)
+Screen('Preference', 'SkipSyncTests', 0)
 % screen
 screenID = max(Screen('Screens'));
 
 % viewing parameters ------------------------------------------------------
 screenNumber = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
+sizePixel = 10/pixelsPerCm;   %in mm, calculated from different Screen  ,has different value
 distance = 56.5;
 stdDis = distance*10; %mm
 windowed = [];
@@ -30,7 +31,7 @@ f = 0.05;
 grating_size = 15;
 maskinner_radius = 2;
 maskouter_radius = 10;
-eachConditionSecs = 10; %1s
+eachConditionSecs = 3; %1s
 % number of elements
 num1 = 20;
 
@@ -48,8 +49,6 @@ r1 = 0.4; % in degree  %% ³õÊ¼ringµÄ°ë¾¶
 % fixation point rectangle
 fixSide = 8;% radius of fixation point is 8 pixel
 fixColor = 0;  %black
-
-sizePixel = 0.28;   %in mm, calculated from different Screen  ,has different value
 
 %--------------------------------------------------------------------------
 try
@@ -69,7 +68,6 @@ try
 	ifi = sM.screenVals.ifi;
 	halfifi = ifi/2;
 	ppd = sM.ppd;
-	sizePixel = 10/sM.pixelsPerCm;
 	[os,od,oc]=Screen('BlendFunction',w);
 	
 	% screen
@@ -134,13 +132,14 @@ try
 		approach = 2;  %when speed = 0,  approach = 2£»
 	end
 	
+	breakLoop = false;
 	Priority(MaxPriority(w));
 	Screen('FillRect',w,gray,[]);
 	Screen('FillOval',w,fixColor,fixRect);
 	Screen('Flip',w);
 	WaitSecs(1);
 	
-	while 1
+	while ~breakLoop
 		
 		%      %%%%%%%judge row and column ,get element
 		%      if randAngleArray(iii)>= 0   %CCW
@@ -249,10 +248,15 @@ try
 		xy2(1,2:2:end) = 800 * sin(ang2);
 		xy2(2,2:2:end) = -800 * cos(ang2);
 		
+		
 		vbl = Screen('Flip',w);
+		ts = vbl;
+		count = 0;
 		vblendtime = vbl + eachConditionSecs;
 		%-----------
 		while vbl < vblendtime
+			
+			count = count + 1;
 			
 			a1 = rad2deg(mod(ang1+(ii-1)*shiftAng,2*pi));
 			r1 = r1Origin + 0.5*r_a*i^2;
@@ -476,16 +480,21 @@ try
 				ss = ss +1;
 				tt = tt +1;
 			end
-			[vbl,~,~,missed] = Screen('Flip',w,vbl+halfifi);
-			if missed>0;fprintf('---!!! Missed frame !!!---\n');end
+			if benchmark == 0
+				[vbl,~,~,missed] = Screen('Flip',w,vbl+halfifi);
+				if missed>0;fprintf('---!!! Missed frame !!!---\n');end
+			else
+				Screen('Flip',w,0,2,2);
+			end
 			[~,~,keycode] = KbCheck(-1);
 			if keycode(esc)
+				breakLoop = true;
 				break;
 			end
 		end
-		[~,~,keycode] = KbCheck;
-		if keycode(esc)
-			break;
+		if benchmark > 0
+			avgfps = count / (GetSecs - ts);
+			fprintf('---> The average FPS was: %f fps.\n',avgfps);
 		end
 	end
 	%save result .mat
