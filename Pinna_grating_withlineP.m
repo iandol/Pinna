@@ -5,9 +5,7 @@ if ~exist('benchmark','var'); benchmark=false; end
 PsychDefaultSetup(2);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
-Screen('Preference', 'SkipSyncTests', 0)
-% screen
-screenID = max(Screen('Screens'));
+Screen('Preference', 'SkipSyncTests', 2)
 
 % viewing parameters ------------------------------------------------------
 screenNumber = max(Screen('Screens'));%-1;
@@ -15,25 +13,24 @@ pixelsPerCm = 35;
 sizePixel = 10/pixelsPerCm;   %in mm, calculated from different Screen  ,has different value
 distance = 56.5;
 stdDis = distance*10; %mm
-windowed = [];
+windowed = [0 0 1000 1000];
 backgroundColour = [0.5 0.5 0.5 1];
 % one_trials = 5;
 % approach = ones(trials); %[0 1]; % simulate approaching (1) or leaving (0)
 approach = 1;
 % directions = [0 1]; % whether the inner ring has CW (0) or CCW (1) rotational direction when approaching, equivalently CCW (0) or CW (1) when leaving
-speeds = 200;  % translation speed, in mm/sec
+speeds = 100;  % translation speed, in mm/sec
 angSpeed = 0; % rotation speeds, in degrees/sec, +: CW, -: CCW
 allAngle1 =  45; %angle of inclination  ,absolute value  no + -
-num_rings = 10;
+num_rings = 9;
 is_mask_outer = 1;
 is_mask_inner = 0;
 f = 0.05;
-grating_size = 15;
 maskinner_radius = 2;
 maskouter_radius = 10;
 eachConditionSecs = 3; %1s
 % number of elements
-num1 = 20;
+num1 = 5;
 
 %for 1st ring
 offset1 = 0;
@@ -44,15 +41,11 @@ ang2 = mod(offset2+linspace(0,360-360/num1,num1),360);  %
 ang2 = deg2rad(ang2); %%
 
 % radius of ring of elements
-r1 = 0.4; % in degree  %% 初始ring的半径
-
-% fixation point rectangle
-fixSide = 8;% radius of fixation point is 8 pixel
-fixColor = 0;  %black
+r1 = 0.4; % in degree  
 
 %--------------------------------------------------------------------------
 try
-		%-----------------------open the PTB screens------------------------
+	%-----------------------open the PTB screens------------------------
 	sM = screenManager('verbose',false,'blend',true,'screen',screenNumber,...
 		'pixelsPerCm',pixelsPerCm,...
 		'distance',distance,'bitDepth','FloatingPoint32BitIfPossible',...
@@ -73,53 +66,79 @@ try
 	% screen
 	white = sM.screenVals.white;
 	black = sM.screenVals.black;
-	gray = (white+black)/2; % index for white, black and gray
-	if gray == white
-		gray = white/2;
-	end
-	inc = white-gray;
+	gray = sM.screenVals.gray;
 	
-	%procedural gabor
-	degsize = 1;
+	%==============procedural gabor===========================
+	degsize = 3;
 	sizeGabor = [degsize*ppd degsize*ppd];
-	phase = 0;
-	sc = 5.0;
-	freq = .06;
-	tilt = 0;
-	contrast = 20.0;
+	phase = 180;
+	sc = 11.0;
+	freq = 2/ppd; %cycles per pixel
+	contrast = 0.95;
 	aspectratio = 1.0;
-	nonsymmetric = 0;
+	nonsymmetric = false;
+	backgroundColorOffset = [0.5 0.5 0.5 0];
+	disableNorm = true;
+	contrastPreMultiplicator = 0.5;
 	mypars = [phase, freq, sc, contrast, aspectratio, 0, 0, 0]';
 	allPars = repmat(mypars,1,num_rings*num1);
-	gabortex = CreateProceduralGabor(w, sizeGabor(1), sizeGabor(2), nonsymmetric, [0.5 0.5 0.5 0.0]);
+	gabortex = CreateProceduralGabor(w, sizeGabor(1), sizeGabor(2), nonsymmetric, backgroundColorOffset, disableNorm, contrastPreMultiplicator);
 	
-	Screen('DrawTexture', w, gabortex, [], [], 45+tilt, [], [], [], [], kPsychDontDoRotation, [phase+180, freq, sc, contrast, aspectratio, 0, 0, 0]);
+	srcRect = Screen('Rect',gabortex);
+	dstRect1 = ScaleRect(srcRect, 0.25, 0.25);
+	dstRect2 = srcRect;
+	dstRect3 = ScaleRect(srcRect, 4, 4);
+	dstRect1 = CenterRectOnPointd(dstRect1, xCen-300, yCen);
+	dstRect2 = CenterRectOnPointd(dstRect2, xCen, yCen);
+	dstRect3 = CenterRectOnPointd(dstRect3, xCen+300, yCen);
+	dstRects = [dstRect1', dstRect2', dstRect3'];
+	
+	auxP = [phase, freq, sc, contrast, aspectratio, 0, 0, 0]';
+	auxP = repmat(auxP,1,3);
+	
+	Screen('DrawTextures', w, gabortex, [], dstRects, [45, 45, 45], ...
+		[], [], [], [], kPsychDontDoRotation, auxP);
+	Screen('DrawText', w, 'These are the source procedural gabors, scaled x0.25 x1 and x2',0,0);
 	sM.flip;
-	WaitSecs(1)
+	WaitSecs('Yieldsecs',2);
 	
-	fixRect = [xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2];
+% 	% We create a Luminance+Alpha matrix for use as transparency mask:
+% 	% Layer 1 (Luminance) is filled with luminance value 'gray' of the
+% 	% background.
+% 	ms = 100;
+% 	transLayer = 2;
+% 	[x,y] = meshgrid(-ms:ms, -ms:ms);
+% 	maskblob = ones(2*ms+1, 2*ms+1, transLayer) * gray;
+% 	size(maskblob);
+% 	
+% 	% Layer 2 (Transparency aka Alpha) is filled with gaussian transparency
+% 	% mask.
+% 	xsd = ms/2.0;
+% 	ysd = ms/2.0;
+% 	maskblob(:,:,transLayer)= white - exp(-((x/xsd).^2)-((y/ysd).^2))*white;
+% 	
+% 	% Build a single transparency mask texture
+% 	masktex=Screen('MakeTexture', w, maskblob);
 	
 	maskinner_radius = maskinner_radius * ppd;% convert degrees to pixels
 	maskouter_radius = maskouter_radius * ppd;% convert degrees to pixels
 	
-% 	if is_mask_outer == 1
-% 		masksize = [wrect(4),wrect(3)];
-% 		mask = ones(masksize(1),masksize(2),2)*gray;
-% 		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
-% 		mask(:, :, 2)=white *(exp(-((x-xCen).^2+(y-yCen).^2)/(maskouter_radius)^2)); % gaussian mask
-% 		mask(mask>white)=white;
-% 		masktex = Screen('MakeTexture', w, mask);
-% 	end
-% 	if is_mask_inner == 1
-% 		masksize = [wrect(4),wrect(3)];
-% 		mask2 = ones(masksize(1),masksize(2),2)*gray;
-% 		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
-% 		mask2(:, :, 2)=white * (1-exp(-((x-xCen).^2+(y-yCen).^2)/((maskinner_radius)*2)^2)); % gaussian mask
-% 		mask2(mask2>white)=white;
-% 		mask2(mask2<30) = black;  %
-% 		masktex2 = Screen('MakeTexture', w, mask2);
-% 	end
-	%----------------------
+	aLayer = 4;
+	if is_mask_outer == 1
+		masksize = [wrect(4)/2,wrect(3)/2];
+		mask = ones(masksize(1),masksize(2),aLayer);
+		mask(:,:,1) = 0.4;
+		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
+		mask(:, :, aLayer) = white *(exp(-((x-xCen).^2+(y-yCen).^2)/(maskouter_radius)^2)); % gaussian mask
+		masktex = Screen('MakeTexture', w, mask);
+	end
+	if is_mask_inner == 1
+		masksize = [wrect(4),wrect(3)];
+		mask2 = ones(masksize(1),masksize(2),aLayer)*gray;
+		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
+		mask2(:, :, aLayer)=white * (1-exp(-((x-xCen).^2+(y-yCen).^2)/((maskinner_radius)*2)^2)); % gaussian mask
+		masktex2 = Screen('MakeTexture', w, mask2);
+	end
 	
 	r1Origin = r1 * ppd;% convert degrees to pixels
 	
@@ -135,7 +154,7 @@ try
 	breakLoop = false;
 	Priority(MaxPriority(w));
 	Screen('FillRect',w,gray,[]);
-	Screen('FillOval',w,fixColor,fixRect);
+	sM.drawCross(0.4,[0 0 0 1]);
 	Screen('Flip',w);
 	WaitSecs(1);
 	
@@ -151,18 +170,12 @@ try
 		
 		%------------------------
 		
-		i = 1;  %when only has one ring
-		ii = 1;   %%%%%%%%%%%%%%%%%%%ii,jj,kk,ll,mm,nn只针对真实旋转的而递增的变量，除了了speed=0 时 与i,j,k,l,m,n一致，且speed = 0时 一直递增！！！
-		jj = 1;         kk = 1;
-		ll = 1;        mm = 1;
-		nn = 1;        oo = 1;
-		pp = 1;        qq = 1;
-		rr = 1;        ss = 1;
-		tt = 1;        j = 1;
-		k = 1;        l = 1;
-		m = 1;        n = 1;
-		o = 1;        p = 1;
-		q = 1;        r = 1;
+ 		i = 1;  %when only has one ring
+		ii = 1;		jj = 1;         kk = 1;		ll = 1;        mm = 1;
+		nn = 1;        oo = 1;		pp = 1;        qq = 1;
+		rr = 1;        ss = 1;		tt = 1;        j = 1;
+		k = 1;        l = 1;		m = 1;        n = 1;
+		o = 1;        p = 1;		q = 1;        r = 1;
 		s = 1;        t = 1;
 		
 		switch num_rings
@@ -248,7 +261,7 @@ try
 		xy2(1,2:2:end) = 800 * sin(ang2);
 		xy2(2,2:2:end) = -800 * cos(ang2);
 		
-		
+
 		vbl = Screen('Flip',w);
 		ts = vbl;
 		count = 0;
@@ -264,14 +277,14 @@ try
 			side1P(2) = side1P(1);
 			dstRect1 = [xCen+r1*sin(mod(ang1+(ii-1)*shiftAng,2*pi))-side1P(2)/2;yCen-r1*cos(mod(ang1+(ii-1)*shiftAng,2*pi))-side1P(1)/2;...
 				xCen+r1*sin(mod(ang1+(ii-1)*shiftAng,2*pi))+side1P(2)/2;yCen-r1*cos(mod(ang1+(ii-1)*shiftAng,2*pi))+side1P(1)/2];
-						
+			
 			a2 = rad2deg(mod(ang2+(jj-1)*shiftAng,2*pi));
 			r2 = r1Origin + 0.5*r_a*j^2;
 			side2P(1) = min_size + 0.5*size_a*j^2;
 			side2P(2) = side2P(1);
 			dstRect2 = [xCen+r2*sin(mod(ang2+(jj-1)*shiftAng,2*pi))-side2P(2)/2;yCen-r2*cos(mod(ang2+(jj-1)*shiftAng,2*pi))-side2P(1)/2;...
 				xCen+r2*sin(mod(ang2+(jj-1)*shiftAng,2*pi))+side2P(2)/2;yCen-r2*cos(mod(ang2+(jj-1)*shiftAng,2*pi))+side2P(1)/2];
-						
+			
 			a3 = rad2deg(mod(ang1+(kk-1)*shiftAng,2*pi));
 			r3 = r1Origin + 0.5*r_a*k^2;
 			side3P(1) = min_size + 0.5*size_a*k^2;
@@ -300,13 +313,13 @@ try
 			dstRect6 = [xCen+r6*sin(mod(ang2+(nn-1)*shiftAng,2*pi))-side6P(2)/2;yCen-r6*cos(mod(ang2+(nn-1)*shiftAng,2*pi))-side6P(1)/2;...
 				xCen+r6*sin(mod(ang2+(nn-1)*shiftAng,2*pi))+side6P(2)/2;yCen-r6*cos(mod(ang2+(nn-1)*shiftAng,2*pi))+side6P(1)/2];
 			
+			a7 = rad2deg(mod(ang1+(oo-1)*shiftAng,2*pi));
 			r7 = r1Origin + 0.5*r_a*o^2;
 			side7P(1) = min_size + 0.5*size_a*o^2;
 			side7P(2) = side7P(1);
 			dstRect7 = [xCen+r7*sin(mod(ang1+(oo-1)*shiftAng,2*pi))-side7P(2)/2;yCen-r7*cos(mod(ang1+(oo-1)*shiftAng,2*pi))-side7P(1)/2;...
 				xCen+r7*sin(mod(ang1+(oo-1)*shiftAng,2*pi))+side7P(2)/2;yCen-r7*cos(mod(ang1+(oo-1)*shiftAng,2*pi))+side7P(1)/2];
-			a7 = rad2deg(mod(ang1+(oo-1)*shiftAng,2*pi));
-			
+						
 			dstRectA = [dstRect1, dstRect2, dstRect3, dstRect4, dstRect5, dstRect6, dstRect7];
 			aA = [a1 a2 a3 a4 a5 a6 a7];
 			
@@ -357,109 +370,62 @@ try
 				Screen('Drawlines',w,xy2,1,200,[xCen yCen],[]);
 			end
 			
-			Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 0]);
+			Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 			Screen('DrawTextures', w, gabortex, [], dstRectA, aA, [], [], [], [], kPsychDontDoRotation, allPars);
-			Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-			Screen('DrawingFinished', w);
-			%%%%%%%%************************** add mask
-% 			if is_mask_outer == 1
-% 				Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-% 				Screen('DrawTexture',w,masktex);
-% 				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-% 			end
-% 			if is_mask_inner == 1
-% 				Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
-% 				Screen('DrawTexture',w,masktex2);
-% 				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
-% 			end
-			%---------------------------------
-			Screen('FillOval',w,fixColor,fixRect);
+			if is_mask_outer == 1
+				Screen('BlendFunction',w,GL_ONE,GL_ONE);
+				Screen('DrawTexture',w,masktex);
+				Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+			end
+			if is_mask_inner == 1
+				Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA);
+				Screen('DrawTexture',w,masktex2);
+				Screen('BlendFunction',w,GL_ONE,GL_ZERO);
+			end
+			sM.drawCross(0.4,[0 0 0 1]);
 			Screen('DrawingFinished', w);
 			
 			if approach ==1
-				i = i+1;
-				ii = i;
-				if i == onFrames
-					i = 1;
-					ii = i;
-				end
+				i = i+1; 				ii = i;
+				if i == onFrames;	i = 1; ii = i; end
 				
-				j = j+1;
-				jj = j;
-				if j == onFrames
-					j = 1;
-					jj = j;
-				end
+				j = j+1;				jj = j;
+				if j == onFrames;	j = 1; jj = j; end
 				
-				k = k+1;
-				kk = k;
-				if k == onFrames
-					k = 1;
-					kk = k;
-				end
+				k = k+1; kk = k;
+				if k == onFrames; k = 1; kk = k; end
 				
-				l = l+1;
-				ll = l;
-				if l == onFrames
-					l = 1;
-					ll = l;
-				end
+				l = l+1; ll = l;
+				if l == onFrames;	l = 1; ll = l; end
 				
-				m = m+1;
-				mm = m;
-				if m == onFrames
-					m = 1;
-					mm = m;
-				end
-				n = n+1;
-				nn = n;
-				if n == onFrames
-					n = 1;
-					nn = n;
-				end
-				o = o+1;
-				oo = o;
-				if o == onFrames
-					o = 1;
-					oo = o;
-				end
+				m = m+1;				mm = m;
+				if m == onFrames;	m = 1; mm = m; end
+				
+				n = n+1;	nn = n;
+				if n == onFrames;	n = 1; nn = n; end
+				
+				o = o+1;				oo = o;
+				if o == onFrames; o = 1; oo = o; end
+				
 				if num_rings >=8
-					p = p +1;
-					pp = p;
-					if p == onFrames
-						p = 1;
-						pp = p;
-					end
+					p = p +1; pp = p;
+					if p == onFrames; p = 1; pp = p; end
+					
 					if num_rings >=9
-						q = q +1;
-						qq = q;
-						if q == onFrames
-							q = 1;
-							qq = q;
-						end
+						q = q +1; qq = q;
+						if q == onFrames;	q = 1; qq = q; end
+						
 						if num_rings >= 10
-							r = r+1;
-							rr = r;
-							if r == onFrames
-								r = 1;
-								rr = r;
-							end
+							r = r+1; rr = r;
+							if r == onFrames;	r = 1; rr = r; end
 							
 							if num_rings >=11
-								s = s+1;
-								ss = s;
-								if s == onFrames
-									s = 1;
-									ss = s;
-								end
+								s = s+1;		ss = s;
+								if s == onFrames;	s = 1; ss = s; end
 								
 								if num_rings >=12
-									t = t+1;
-									tt = t;
-									if t == onFrames
-										t = 1;
-										tt = t;
-									end
+									t = t+1;	tt = t;
+									if t == onFrames; t = 1; tt = t;end
 								end %12
 							end %11
 						end  %10
@@ -500,18 +466,18 @@ try
 	%save result .mat
 	%  save(file.sta_fileName,'ana');
 	%  save('ana');
-	Screen('FillRect',w,gray,[]);
-	Screen('FillOval',w,fixColor,fixRect);
+	sM.drawBackground();
+	sM.drawCross(0.4,[0 0 0 1]);
 	Priority(0);
 	Screen('Flip',w);
 	WaitSecs(1); % wait for 2 seconds
-	Screen('CloseAll');
+	Screen('Close', gabortex); Screen('Close', masktex);
+	sM.close();
 	ShowCursor;
-catch
+catch ME
 	Screen('CloseAll');
 	Priority(0);
-	psychrethrow(psychlasterror);
-	
+	getReport(ME);
 end
 
 return;

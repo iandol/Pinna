@@ -5,7 +5,7 @@ if ~exist('benchmark','var'); benchmark=false;end
 PsychDefaultSetup(0);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
-Screen('Preference', 'SkipSyncTests', 2)
+Screen('Preference', 'SkipSyncTests', 0)
 % screen
 screenID = max(Screen('Screens'));
 
@@ -56,7 +56,7 @@ try
 	inc = white-grey;
 	[w,wrect] = Screen('OpenWindow',screenID,grey,[]);
 	ifi = Screen('GetFlipInterval',w);
-	halfisi = ifi/2;
+	halfifi = ifi/2;
 	xCen = wrect(3)/2;
 	yCen = wrect(4)/2;
 	ScreenWidth = round(wrect(3)*sizePixel);

@@ -40,14 +40,12 @@ c = sprintf(' %i',fix(clock()));
 c = regexprep(c,' ','_');
 nameExp = [nameExp c];
 
-% viewing parameters ------------------------------------------------------
+%---------------------- viewing parameters -------------------------------
 screenID = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
 distance = 56.5;
 windowed = [800 800];
 backgroundColor = [0.5 0.5 0.5];
-
-% viewing parameters ------------------------------------------------------
 stdDis = distance*10; %mm
 approach = 1;%[0 1]; % simulate approaching (1) or leaving (0)
 % directions = [0 1]; % whether the inner ring has CW (0) or CCW (1) rotational direction when approaching, equivalently CCW (0) or CW (1) when leaving
