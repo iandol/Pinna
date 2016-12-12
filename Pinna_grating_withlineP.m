@@ -5,7 +5,7 @@ if ~exist('benchmark','var'); benchmark=false; end
 PsychDefaultSetup(2);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
-Screen('Preference', 'SkipSyncTests', 2)
+Screen('Preference', 'SkipSyncTests', 1)
 
 % viewing parameters ------------------------------------------------------
 screenNumber = max(Screen('Screens'));%-1;
@@ -13,24 +13,24 @@ pixelsPerCm = 35;
 sizePixel = 10/pixelsPerCm;   %in mm, calculated from different Screen  ,has different value
 distance = 56.5;
 stdDis = distance*10; %mm
-windowed = [0 0 1000 1000];
+windowed = [];
 backgroundColour = [0.5 0.5 0.5 1];
 % one_trials = 5;
 % approach = ones(trials); %[0 1]; % simulate approaching (1) or leaving (0)
 approach = 1;
 % directions = [0 1]; % whether the inner ring has CW (0) or CCW (1) rotational direction when approaching, equivalently CCW (0) or CW (1) when leaving
-speeds = 100;  % translation speed, in mm/sec
-angSpeed = 0; % rotation speeds, in degrees/sec, +: CW, -: CCW
+speeds = 200;  % translation speed, in mm/sec
+angSpeed = 10; % rotation speeds, in degrees/sec, +: CW, -: CCW
 allAngle1 =  45; %angle of inclination  ,absolute value  no + -
-num_rings = 9;
-is_mask_outer = 1;
+num_rings = 10;
+is_mask_outer = 0;
 is_mask_inner = 0;
 f = 0.05;
 maskinner_radius = 2;
 maskouter_radius = 10;
 eachConditionSecs = 3; %1s
 % number of elements
-num1 = 5;
+num1 = 20;
 
 %for 1st ring
 offset1 = 0;
@@ -46,11 +46,11 @@ r1 = 0.4; % in degree
 %--------------------------------------------------------------------------
 try
 	%-----------------------open the PTB screens------------------------
-	sM = screenManager('verbose',false,'blend',true,'screen',screenNumber,...
+	sM = screenManager('verbose',false,'screen',screenNumber,...
 		'pixelsPerCm',pixelsPerCm,...
-		'distance',distance,'bitDepth','FloatingPoint32BitIfPossible',...
-		'debug',false,'antiAlias',0,'nativeBeamPosition',0, ...
-		'srcMode','GL_ONE','dstMode','GL_ZERO',...
+		'distance',distance,'bitDepth','8bit',...
+		'debug',false,'antiAlias',0, ...
+		'blend',true,'srcMode','GL_ONE','dstMode','GL_ZERO',...
 		'windowed',windowed,'backgroundColour',[backgroundColour],...
 		'gammaTable', []); %use a temporary screenManager object
 	screenVals = open(sM); %open PTB screen
@@ -71,13 +71,13 @@ try
 	%==============procedural gabor===========================
 	degsize = 3;
 	sizeGabor = [degsize*ppd degsize*ppd];
-	phase = 180;
-	sc = 11.0;
+	phase = 90;
+	sc = 8.0;
 	freq = 2/ppd; %cycles per pixel
-	contrast = 0.95;
+	contrast = 0.99;
 	aspectratio = 1.0;
 	nonsymmetric = false;
-	backgroundColorOffset = [0.5 0.5 0.5 0];
+	backgroundColorOffset = [0.5 0.5 0.5 1];
 	disableNorm = true;
 	contrastPreMultiplicator = 0.5;
 	mypars = [phase, freq, sc, contrast, aspectratio, 0, 0, 0]';
@@ -96,6 +96,7 @@ try
 	auxP = [phase, freq, sc, contrast, aspectratio, 0, 0, 0]';
 	auxP = repmat(auxP,1,3);
 	
+	fprintf('===>>> Draw example procedural gabors\n');
 	Screen('DrawTextures', w, gabortex, [], dstRects, [45, 45, 45], ...
 		[], [], [], [], kPsychDontDoRotation, auxP);
 	Screen('DrawText', w, 'These are the source procedural gabors, scaled x0.25 x1 and x2',0,0);
@@ -156,6 +157,7 @@ try
 	Screen('FillRect',w,gray,[]);
 	sM.drawCross(0.4,[0 0 0 1]);
 	Screen('Flip',w);
+	fprintf('\n===>>> Start Pinna display...\n');
 	WaitSecs(1);
 	
 	while ~breakLoop
@@ -370,7 +372,7 @@ try
 				Screen('Drawlines',w,xy2,1,200,[xCen yCen],[]);
 			end
 			
-			Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+			%Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 			Screen('DrawTextures', w, gabortex, [], dstRectA, aA, [], [], [], [], kPsychDontDoRotation, allPars);
 			if is_mask_outer == 1
 				Screen('BlendFunction',w,GL_ONE,GL_ONE);
@@ -470,7 +472,7 @@ try
 	sM.drawCross(0.4,[0 0 0 1]);
 	Priority(0);
 	Screen('Flip',w);
-	WaitSecs(1); % wait for 2 seconds
+	WaitSecs('YieldSecs',1); 
 	Screen('Close', gabortex); Screen('Close', masktex);
 	sM.close();
 	ShowCursor;

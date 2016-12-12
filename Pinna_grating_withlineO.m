@@ -25,7 +25,7 @@ f = 0.05;
 grating_size = 15;
 maskinner_radius = 2;
 maskouter_radius = 10;
-eachConditionSecs = 10; %1s
+eachConditionSecs = 3; %1s
 % number of elements
 num1 = 20;
 

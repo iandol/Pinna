@@ -1,36 +1,41 @@
 function Pinna_grating_main(angle_pattern,move_speed_i,...
 	angle_speed_i,ResultDir,one_trials,duration,...
 	match_time,is_binary_mask,mask_diameter,mask_xpos,...
-	mask_ypos,calib_file)
+	mask_ypos,use_eyelink,fix_radius,calib_file)
 
 global eL sM ana w wrect ifi waitFrames ang1 ang2 ...
-	white black grey approach spa spb r1Origin abandon move_speed...
-	ok ckey xc yc ovalRect r1Match  eleTexMatch1  txtColorMat ...
-	shiftAng1  onFrames numChoice angSpeed1 ppd
+	white black gray approach spa spb esc ok ckey r1Origin ...
+	abandon move_speed...
+	xc yc ovalRect r1Match  eleTexMatch1  txtColorMat ...
+	shiftAng1 onFrames numChoice angSpeed1 ppd breakLoop;
 
 if nargin == 0; error('No parameters passed');end
 
-ians = inputdlg({'Subject Name','Comments (room, lights etc.)'});
-ana.subject = ians{1};
-ana.comments = ians{2};
-useEyeLink = false;
+ins = inputdlg({'Subject Name','Comments (room, lights etc.)'});
+ana=[];
+ana.subject = ins{1};
+ana.comments = ins{2};
+ana.date = datestr(datetime);
+ana.version = Screen('Version');
+ana.computer = Screen('Computer');
+ana.calibFile = calib_file;
+useEyeLink = use_eyelink;
 isDummy = false;
 PsychDefaultSetup(0);
-Screen('Preference', 'SkipSyncTests', 2)
+Screen('Preference', 'SkipSyncTests', 0);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
 ok = KbName('uparrow');
 spa = KbName('leftarrow');
 spb = KbName('rightarrow');
 ckey = KbName('c');
-numChoice = 0;
 
 %--------------fix parameters
 fixX = 0;
 fixY = 0;
-firstFixInit = 0.5;
-firstFixTime = 2;
-firstFixRadius = 1;
+firstFixInit = 1;
+firstFixTime = 1;
+firstFixRadius = fix_radius;
 strictFixation = true;
 
 %----------------Make a name for this run-----------------------
@@ -44,8 +49,8 @@ nameExp = [nameExp c];
 screenID = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
 distance = 56.5;
-windowed = [800 800];
-backgroundColor = [0.5 0.5 0.5];
+windowed = [];
+backgroundColor = [127.5 127.5 127.5];
 stdDis = distance*10; %mm
 approach = 1;%[0 1]; % simulate approaching (1) or leaving (0)
 % directions = [0 1]; % whether the inner ring has CW (0) or CCW (1) rotational direction when approaching, equivalently CCW (0) or CW (1) when leaving
@@ -108,49 +113,23 @@ for i = 1:trials
 	move_speed_index = rotation_speed_index;%value is 1~num_move_speed And num_rotation_speed = num_move_speed; because one-to-one
 end
 
-%===================================================
-%global struct ana to save para
-ana.angle_index = pattern_angle_index;
-ana.move_speed_index = move_speed_index;
-ana.angle_speed_index = rotation_speed_index;
-ana.randArray = column_rank;
-ana.result = zeros(1,trials);
-ana.allAngle = allAngle1;
-ana.one_trials = one_trials;
-ana.moving_speed = move_speed_i;
-ana.angle_speed = angle_speed_i;
-ana.sti_duration = duration;
-ana.sti_match_time = match_time;
-ana.is_binary_mask = is_binary_mask;
-ana.mask_diameter = mask_diameter;
-ana.mask_xpos = mask_xpos;
-ana.mask_ypos = mask_ypos;
-ana.fixX = fixX;
-ana.fixY = fixY;
-ana.firstFixInit = firstFixInit;
-ana.firstFixTime = firstFixTime;
-ana.firstFixRadius = firstFixRadius;
-ana.strictFixation = strictFixation;
-%======================================================
-
 try
 	white = WhiteIndex(screenID);
 	black = BlackIndex(screenID);
-	grey = (white+black)/2; % index for white, black and grey
-	if grey == white
-		grey = white/2;
+	gray = (white+black)/2; % index for white, black and gray
+	if gray == white
+		gray = white/2;
 	end
-	inc = white-grey;
-	[w,wrect] = Screen('OpenWindow',screenID,grey,[0 0 800 800]);
+	inc = white-gray;
+	[w,wrect] = Screen('OpenWindow',screenID,gray,windowed);
 	ifi = Screen('GetFlipInterval',w);
-	halfisi = ifi/2;
+	halfifi = ifi/2;
 	xCen = wrect(3)/2;
 	yCen = wrect(4)/2;
 	ScreenWidth = round(wrect(3)*sizePixel);
 	ppd = wrect(3)/2/atand(ScreenWidth/2/stdDis);
 	[os,od,oc]=Screen('BlendFunction',w);
-	
-	
+
 	%==============================setup eyelink==========================
 	sM = screenManager;
 	sM.screen = screenID;
@@ -169,27 +148,32 @@ try
 		eL.sampleRate = 500;
 		eL.remoteCalibration = false; % manual calibration?
 		eL.calibrationStyle = 'HV5'; % calibration style
-		eL.modify.calibrationtargetcolour = [1 1 1];
-		eL.modify.calibrationtargetsize = 0.6;
-		eL.modify.calibrationtargetwidth = 0.02;
+		eL.modify.calibrationtargetcolour = [0 0 0];
+		eL.modify.calibrationtargetsize = 0.5;
+		eL.modify.calibrationtargetwidth = 0.05;
 		eL.modify.waitformodereadytime = 500;
 		eL.modify.devicenumber = -1; % -1 = use any keyboard
 		% X, Y, FixInitTime, FixTime, Radius, StrictFix
 		updateFixationValues(eL, fixX, fixY, firstFixInit, firstFixTime, firstFixRadius, strictFixation);
 		initialise(eL, sM);
 		setup(eL);
-		WaitSecs(0.5);
+		WaitSecs('YieldSecs',0.25);
 		getSample(eL);
 	else
 		eL = [];
 	end
+	
+	%===================================================
+	%global struct ana to save para
+	saveMetaData();
+	%======================================================
 	
 	% screen areas
 	xc = (1:2).*wrect(3)/3; %match -only have A and B
 	yc = wrect(4)/2;
 	r1Match = round(45.0/sizePixel); %30mm/0.25=120pixels ;max radius at match
 	
-	%%%%%%% 3 fixPoint
+	% 3 fixPoint
 	fixRect = [xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2];
 	fixSideMatch = round(1.7/sizePixel);%6;
 	ovalRect = zeros(4,2);
@@ -204,7 +188,7 @@ try
 		mask_diameter = mask_diameter * ppd;
 		radius = mask_diameter/2; %diameter to radius
 		masksize = [wrect(4),wrect(3)];
-		mask = ones(masksize(1),masksize(2),2)*grey;
+		mask = ones(masksize(1),masksize(2),2)*gray;
 		[x1,y1] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
 		mask(:,:,2) = white*((x1-mask_xpos).^2 + (y1-mask_ypos).^2 <=(radius).^2);
 		masktex11 = Screen('MakeTexture', w, mask);
@@ -235,7 +219,7 @@ try
 		a1=cos(angle1)*f;
 		b1=sin(angle1)*f;
 		m1=exp(-((x/grating_size).^2)-((y/grating_size).^2)).*sin(a1*x+b1*y-5);
-		AllElements(1,jj).eleTex1P = Screen('MakeTexture',w,grey+inc*m1);    %CCW
+		AllElements(1,jj).eleTex1P = Screen('MakeTexture',w,gray+inc*m1);    %CCW
 		
 	end
 	%%%%%%%%%%%%%%%%%%%%%%outside mask & inside mask
@@ -244,16 +228,16 @@ try
 	maskouter_radius = maskouter_radius * ppd;% convert degrees to pixels
 	
 	if is_mask_outer == 1
-		masksize = [wrect(4)/4,wrect(3)/4];
-		mask = ones(masksize(1),masksize(2),2)*grey;
+		masksize = [wrect(4),wrect(3)];
+		mask = ones(masksize(1),masksize(2),2)*gray;
 		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
 		mask(:, :, 2)=white *(exp(-((x-xCen).^2+(y-yCen).^2)/(maskouter_radius)^2)); % gaussian mask
 		mask(mask>white)=white;
 		masktex = Screen('MakeTexture', w, mask);
 	end
 	if is_mask_inner == 1
-		masksize = [wrect(4)/4,wrect(3)/4];
-		mask2 = ones(masksize(1),masksize(2),2)*grey;
+		masksize = [wrect(4),wrect(3)];
+		mask2 = ones(masksize(1),masksize(2),2)*gray;
 		[x,y] = meshgrid(0:masksize(2)-1,0:masksize(1)-1);
 		mask2(:, :, 2)=white * (1-exp(-((x-xCen).^2+(y-yCen).^2)/((maskinner_radius)*2)^2)); % gaussian mask
 		mask2(mask2>white)=white;
@@ -262,38 +246,55 @@ try
 	end
 	%----------------------
 	
-	Screen('FillRect',w,grey,[]);
-	normBoundsRect = Screen('TextBounds', w, 'Please fix at the central point.');
-	Screen('DrawText',w,'Please fix at the central point.',xCen-normBoundsRect(3)/2,yCen-normBoundsRect(4)/2);
-	Screen('FillOval',w,fixColor,fixRect);
-	Screen('Flip',w);
-	WaitSecs(2);
+	figH = figure('Position',[100 100 700 600],'NumberTitle','off','Name',...
+		['Subject: ' ana.subject  ' started ' ana.date ' | ' ana.comments]);
+	box on; grid on; grid minor; ylim([0 3]);
+	xlabel('Trials ')
+	ylabel('Response')
+	title('Pinna Psychophysics')
+	drawnow; WaitSecs('YieldSecs',0.25);
 	
-	WaitSecs(1);
+	if ~useEyeLink
+		Screen('FillRect',w,gray,[]);
+		normBoundsRect = Screen('TextBounds', w, 'Please fix at the central point.');
+		Screen('DrawText',w,'Please fix at the central point.',xCen-normBoundsRect(3)/2,yCen+normBoundsRect(4));
+		drawCross(sM,0.3,[0 0 0 1],fixX,fixY);
+		Screen('Flip',w);
+		WaitSecs('YieldSecs',2);
+	end
+	
+	% initialise our trial variables
 	iii = 1;
 	breakLoop = false;
+	fixated = 'no';
+	response = NaN;
+	numChoice = -1;
 	
 	%%%%%%%%%%%%%%%%%%%%%%--WE LOOP BABY--%%%%%%%%%%%%%%%%%%%%%%%%%
 	while ~breakLoop
-		
-		%======================initialise eyelink and draw fix spaot================
+		fixated = 'no';
+		response = NaN;
+		numChoice = -1;
+		sM.drawBackground();
+		Screen('Flip',w);
+		WaitSecs('YieldSecs',1);
+		%======================initialise eyelink and draw fix spot================
 		if useEyeLink
 			resetFixation(eL);
 			updateFixationValues(eL, fixX, fixY, firstFixInit, firstFixTime, firstFixRadius, strictFixation);
 			trackerClearScreen(eL);
 			trackerDrawFixation(eL); %draw fixation window on eyelink computer
-			trackerDrawStimuli(eL,ts);
 			edfMessage(eL,'V_RT MESSAGE END_FIX END_RT');  %this 3 lines set the trial info for the eyelink
-			edfMessage(eL,['TRIALID ' num2str(task.totalRuns)]);  %obj.getTaskIndex gives us which trial we're at
-			edfMessage(eL,['UUID ' currentUUID]); %add a unique ID
-			edfMessage(eL,['MSG:MASKDELAY ' num2str(maskDelay)]); %add in the delay of the current state for good measure
+			edfMessage(eL,['TRIALID ' num2str(iii)]);  %obj.getTaskIndex gives us which trial we're at
 			startRecording(eL);
 			statusMessage(eL,'INITIATE FIXATION...');
 			fixated = '';
+			ListenChar(2);
 			syncTime(eL);
+			%fprintf('===>>> INITIATE FIXATION Trial = %i\n', iii);
 			while ~strcmpi(fixated,'fix') && ~strcmpi(fixated,'breakfix')
-				drawCross(sM,0.4,[0 0 0 1],fixX,fixY);
-				tFix = Screen('Flip',s.win); %flip the buffer
+				drawCross(sM,0.3,[0 0 0 1],fixX,fixY);
+				Screen('Flip',w); %flip the buffer
 				getSample(eL);
 				fixated=testSearchHoldFixation(eL,'fix','breakfix');
 				[keyIsDown, ~, keyCode] = KbCheck(-1);
@@ -305,27 +306,40 @@ try
 							stopRecording(eL);
 							setOffline(eL);
 							trackerSetup(eL);
-							WaitSecs(2);
+							WaitSecs('YieldSecs',2);
 						case {'d'}
 							fixated = 'breakfix';
 							stopRecording(eL);
 							driftCorrection(eL);
-							WaitSecs(2);
+							WaitSecs('YieldSecs',2);
 						case {'q'}
 							fixated = 'breakfix';
-							breakloop = true;
+							response = -100;
+							breakLoop = true;
 					end
+					ListenChar(0);
 				end
 			end
-			if strcmpi(fixated,'breakfix'); response = BREAKFIX; end
-		else
-			Screen('FillOval',w,fixColor,fixRect);
+			if strcmpi(fixated,'breakfix')
+				response = -1; 
+				fprintf('===>>> BROKE INITIATE FIXATION Trial = %i\n', iii);
+				statusMessage(eL,'Subject Broke Initial Fixation!');
+				edfMessage(eL,'MSG:BreakFix');
+				resetFixation(eL);
+				stopRecording(eL);
+				edfMessage(eL,['TRIAL_RESULT ' num2str(response)]);
+				setOffline(eL);
+				continue
+			end
+		else %no eyetracker, simple show cross
+			fixated = 'fix';
+			drawCross(sM,0.3,[0 0 0 1],fixX,fixY);
 			Screen('Flip',w);
+			WaitSecs('YieldSecs',0.75);
 		end
 		
 		%------Our main stimulus drawing loop
 		while iii<=trials && strcmpi(fixated,'fix') %initial fixation held
-			if useEyeLink; edfMessage(eL,'END_FIX'); statusMessage(eL,'Show Stimulus...'); end
 			waitFrames = 1;
 			angSpeed1 = angle_speed_i(rotation_speed_index(iii));
 			shiftAng1 = pi*(angSpeed1.*ifi)/180;  %degtorad(angSpeed1.*ifi);
@@ -359,7 +373,8 @@ try
 				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%真实旋转
 				condition = 4;
 			end
-
+			fprintf('===>>> Trial = %i speeds = %.2g approach = %.2g Condition = %.2g\n', iii,speeds,approach,condition);
+			
 			row = 1;
 			column = pattern_angle_index(iii);
 			i = 1;  %when only has one ring
@@ -422,6 +437,7 @@ try
 			r_a = 2*(max_r-r1Origin)/(onFrames)^2;
 			size_a = 2*(max_size-min_size)/(onFrames)^2;
 			
+			if useEyeLink; edfMessage(eL,'END_FIX'); statusMessage(eL,'Show Stimulus...'); end
 			vbl = Screen('Flip',w);
 			vblendtime = vbl + eachConditionSecs;
 			while vbl < vblendtime
@@ -468,12 +484,12 @@ try
 				dstRect6 = [xCen+r6*sin(mod(ang2+(nn-1)*shiftAng,2*pi))-side6P(2)/2;yCen-r6*cos(mod(ang2+(nn-1)*shiftAng,2*pi))-side6P(1)/2;...
 					xCen+r6*sin(mod(ang2+(nn-1)*shiftAng,2*pi))+side6P(2)/2;yCen-r6*cos(mod(ang2+(nn-1)*shiftAng,2*pi))+side6P(1)/2];
 				
+				a7 = rad2deg(mod(ang1+(oo-1)*shiftAng,2*pi));
 				r7 = r1Origin + 0.5*r_a*o^2;
 				side7P(1) = min_size + 0.5*size_a*o^2;
 				side7P(2) = side7P(1);
 				dstRect7 = [xCen+r7*sin(mod(ang1+(oo-1)*shiftAng,2*pi))-side7P(2)/2;yCen-r7*cos(mod(ang1+(oo-1)*shiftAng,2*pi))-side7P(1)/2;...
 					xCen+r7*sin(mod(ang1+(oo-1)*shiftAng,2*pi))+side7P(2)/2;yCen-r7*cos(mod(ang1+(oo-1)*shiftAng,2*pi))+side7P(1)/2];
-				a7 = rad2deg(mod(ang1+(oo-1)*shiftAng,2*pi));
 				
 				dstRectA = [dstRect1, dstRect2, dstRect3, dstRect4, dstRect5, dstRect6, dstRect7];
 				aA = [a1 a2 a3 a4 a5 a6 a7];
@@ -522,7 +538,7 @@ try
 				Screen('DrawTextures',w,AllElements(row,column).eleTex1P,[],dstRectA,aA,1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
 				
 				if is_mask_outer == 1
-					Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 0]);
+					Screen('BlendFunction',w,GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA,[1 1 1 0]);
 					Screen('DrawTexture',w,masktex);
 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
 				end
@@ -537,11 +553,11 @@ try
 					Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
 				end
 				
-				Screen('FillOval',w,fixColor,fixRect);
+				drawCross(sM,0.3,[0 0 0 1],fixX,fixY); %Screen('FillOval',w,fixColor,fixRect);
 				Screen('DrawingFinished', w);
 				
 				if approach == 1
-					i = i+1; if i == onFrames;	i = 1; end				
+					i = i+1; if i == onFrames;	i = 1; end
 					j = j+1;	if j == onFrames;	j = 1; end
 					k = k+1;	if k == onFrames;	k = 1; end
 					l = l+1;	if l == onFrames;	l = 1; end
@@ -553,9 +569,9 @@ try
 						if num_rings >=9
 							q = q +1;if q == onFrames;q = 1;end
 							if num_rings >= 10
-								r = r+1;if r == onFrames;r = 1;end								
+								r = r+1;if r == onFrames;r = 1;end
 								if num_rings >=11
-									s = s+1;if s == onFrames;s = 1;end								
+									s = s+1;if s == onFrames;s = 1;end
 									if num_rings >=12
 										t = t+1;if t == onFrames;t = 1;end
 									end %12
@@ -590,15 +606,15 @@ try
 															end %12
 														end %11
 													end %10
-												end  %9
-											end  %8
-										end  %7
-									end   %6
-								end
-							end
-						end
-					end
-				end
+												end %9
+											end %8
+										end %7
+									end %6
+								end %5
+							end %4
+						end %3
+					end %2
+				end %approach
 				
 				%                 if approach == 2   %  只为了静止时，真实旋转可以实现
 				ii = ii+1;				jj = jj+1;
@@ -608,56 +624,165 @@ try
 				qq = qq +1;				rr = rr +1;
 				ss = ss +1;				tt = tt +1;
 				%                 end
-
+				
 				if useEyeLink
 					getSample(eL);
 					isfix = isFixated(eL);
 					if ~isfix
 						fixated = 'breakfix';
-						break;
+						break %break the while loop
 					end
 				end
 				[vbl,~,~,missed] = Screen('Flip',w,vbl+halfifi);
 				if missed>0;fprintf('---!!! Missed frame !!!---\n');end
-			end
+			end %%% --- end  main vblendtime draw loop
+			
+			sM.drawBackground();
+			Screen('Flip',w);
+			thisTrial = iii;
+			% check if we lost fixation
 			if ~strcmpi(fixated,'fix')
-				response = -1; 
-				statusMessage(eL,'Subject Broke Fixation!'); 
-				edfMessage(eL,'BreakFix')
+				fprintf('===>>> BROKE FIXATION Trial = %i\n', iii);
+				response = -1;
+				statusMessage(eL,'Subject Broke Fixation!');
+				edfMessage(eL,'MSG:BreakFix');
+				resetFixation(eL);
+				stopRecording(eL);
+				edfMessage(eL,['TRIAL_RESULT ' num2str(response)]);
+				setOffline(eL);
 				continue
 			end
 			
-			[~,~,keycode] = KbCheck(-1);
-			if keycode(esc)
-				breakLoop = true;
-				break;  %break while 1
-			end
-			
+			% get subject reponse
 			Pinna_grating_match(condition,match_time);
 			if abandon==0   %else restart,and don't save data
 				ana.result(1,iii) = numChoice;
+				response = numChoice;
 				iii = iii+1;
-				numChoice = -1;
+				doPlot();
 			end
+			%log response to eyelink
 			if useEyeLink
+				fprintf('===>>> Trial = %i RESPONSE = %.2g\n', thisTrial,response);
 				resetFixation(eL);
 				stopRecording(eL);
-				edfMessage(eL,['TRIAL_RESULT ' num2str(numChoice)]);
+				edfMessage(eL,['TRIAL_RESULT ' num2str(response)]);
 				setOffline(eL);
 			end
-		end % while fix and <iii
-	end
-	cd(ResultDir);
-	save([nameExp '.mat'],'ana');
+		end % END while fix and <iii
+		if iii>trials; breakLoop = true; end
+	end % breakLoop
 	close(sM);
-	Screen('CloseAll');
-	ShowCursor;
+	ListenChar(0);ShowCursor;Priority(0);Screen('CloseAll');
+	if exist('ResultDir','dir')
+		cd(ResultDir);
+	end		
+	disp(['===>>> SAVE, saved current data to: ' pwd]);
+	save([nameExp '.mat'],'ana','eL');
+	if useEyeLink == true; close(eL); end
 catch ME
 	close(sM);
-	Screen('CloseAll');sca
-	ListenChar(0);
-	Priority(0);
+	ListenChar(0);ShowCursor;Priority(0);Screen('CloseAll');
 	getReport(ME)
 end
 
-return;
+	function saveMetaData()
+		ana.angle_pattern = angle_pattern;
+		ana.angle_index = pattern_angle_index;
+		ana.move_speed_index = move_speed_index;
+		ana.angle_speed_index = rotation_speed_index;
+		ana.randArray = column_rank;
+		ana.result = zeros(1,trials);
+		ana.allAngle = allAngle1;
+		ana.one_trials = one_trials;
+		ana.moving_speed = move_speed_i;
+		ana.angle_speed = angle_speed_i;
+		ana.sti_duration = duration;
+		ana.sti_match_time = match_time;
+		ana.is_binary_mask = is_binary_mask;
+		ana.mask_diameter = mask_diameter;
+		ana.mask_xpos = mask_xpos;
+		ana.mask_ypos = mask_ypos;
+		ana.ResultDir =  ResultDir;
+		ana.backgroundColor = backgroundColor;
+		ana.stdDis = stdDis;
+		ana.halfifi = halfifi;
+		ana.ifi = ifi;
+		ana.xCen = xCen;
+		ana.yCen = yCen;
+		
+		ana.useEyeLink = useEyeLink;
+		ana.isDummy = isDummy;
+		ana.pixelsPerCm = pixelsPerCm; %26 for Dorris lab,32=Lab CRT -- 44=27"monitor or Macbook Pro
+		ana.distance = distance; %64.5 in Dorris lab;
+		ana.windowed = windowed;
+		ana.eL = eL;
+		
+		ana.fixX = fixX;
+		ana.fixY = fixY;
+		ana.firstFixInit = firstFixInit;
+		ana.firstFixTime = firstFixTime;
+		ana.firstFixRadius = firstFixRadius;
+		ana.strictFixation = strictFixation;
+		
+	end
+
+	function setupTrial()
+		task = stimulusSequence();
+		task.name = nameExp;
+		task.nBlocks = 50;
+		task.nVar(1).name = 'colour';
+		task.nVar(1).stimulus = [1];
+		task.nVar(1).values = [0 1];
+		randomiseStimuli(task);
+		initialiseTask(task);
+		if staircase == true
+			stopCriterion = 'trials';
+			stopRule = 25;
+
+			stims = linspace(0.022,maxTime,50);
+			priorAlphaB = [0:0.01:maxTime];
+			priorAlphaW = [0:0.01:maxTime];
+			priorBeta = [0.5:0.5:4]; %our slope
+			priorGammaRange = 0.5;  %fixed value (using vector here would make it a free parameter) 
+			priorLambdaRange = [0.02:0.02:0.12]; %ditto
+
+			taskB = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
+				'priorAlphaRange', priorAlphaB, 'priorBetaRange', priorBeta,...
+				'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
+				'numTrials', stopRule,'marginalize','lapse');
+
+			taskW = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
+				'priorAlphaRange', priorAlphaW, 'priorBetaRange', priorBeta,...
+				'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
+				'numTrials', stopRule,'marginalize','lapse');
+
+			priorB = PAL_pdfNormal(taskB.priorAlphas,0.25,1).*PAL_pdfNormal(taskB.priorBetas,2,3);
+			priorW = PAL_pdfNormal(taskW.priorAlphas,0.25,1).*PAL_pdfNormal(taskW.priorBetas,2,3);
+		% 	figure; 
+		% 	subplot(1,2,1);imagesc(taskB.priorAlphaRange,taskB.priorBetaRange,priorB);axis square
+		% 	subplot(1,2,2);imagesc(taskW.priorAlphaRange,taskW.priorBetaRange,priorW); axis square
+		% 	xlabel('Threshold');ylabel('Slope');title('Initial Bayesian Priors')
+
+			taskB = PAL_AMPM_setupPM(taskB,'prior',priorB);
+			taskW = PAL_AMPM_setupPM(taskW,'prior',priorB);
+		end
+	end
+
+function doPlot()
+		if ~isfield(ana,'result') || isempty(ana.result)
+			return
+		end
+		figure(figH);
+		x = 1:length(ana.result);
+		plot(x, ana.result,'ro','MarkerFaceColor','r','MarkerSize',8); 
+		t = sprintf('NEXT TRIAL:%i', iii);
+		title(t);
+		box on; grid on; grid minor; ylim([0 3])
+		xlabel('Total Trials');
+		ylabel('Subject Response');
+		hold off;
+		drawnow;
+	end
+
+end

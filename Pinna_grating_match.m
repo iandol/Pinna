@@ -1,10 +1,11 @@
 function Pinna_grating_match(condition,match_time)
-global sM w wrect ifi waitFrames ang1 ang2  black spa spb spc  onFrames approach r1Origin abandon ...
-    ok  xc yc ovalRect r1Match  eleTexMatch1 txtColorMat  numChoice  ppd
+global sM w wrect ifi waitFrames ang1 ang2 ...
+	spa spb ok esc cKey onFrames approach r1Origin abandon ...
+  xc yc r1Match  eleTexMatch1 txtColorMat ...
+	numChoice ppd breakLoop
 
-KbName('UnifyKeyNames');
-esc = KbName('escape');
-abandon = 0;
+abandon = 1;
+flag = 0;
 num_rings = 3;
 % expansion = 1;
 eachConditionSecs = match_time;  %>10s abandon
@@ -21,8 +22,6 @@ approach = 2;
 
 shiftAng(1) = -pi*(20.*ifi)/180;
 shiftAng(2) = pi*(20.*ifi)/180;
-
-flag = 0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%expansion
 i = 1;  %when only has one ring
@@ -138,7 +137,7 @@ while vbl < vblendtime
             xc(2)+r6*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(1)/2];
 	 end
     
-	 Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 1]);
+	 %Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 1]);
     dstRect1 = [dstRect1a dstRect1b];
     Screen('DrawTextures',w,eleTexMatch1,[],dstRect1,[(180/pi)*(mod(ang1+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang1+(ii-1)*shiftAng(2),2*pi))],...
         1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
@@ -167,46 +166,50 @@ while vbl < vblendtime
         Screen('DrawTextures',w,eleTexMatch1,[],dstRect6,[(180/pi)*(mod(ang2+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang2+(ii-1)*shiftAng(2),2*pi))],...
             1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
 	 end
-	 Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
+	 %Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
     
     ii = ii+1;
     
-    vbl = Screen('Flip',w,vbl+(waitFrames-0.5)*ifi);
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    sM.drawCross(0.4,[0 0 0 1]);
-    
+		sM.drawCross(0.3,[0 0 0 1]);
     Screen('DrawText',w,'a',wrect(3)/3,wrect(4)/2+200,colorMat(1,:));
-    
     Screen('DrawText',w,'b',wrect(3)*2/3,wrect(4)/2+200,colorMat(2,:));
-    
-    [~,~,keycode] = KbCheck;
+
+    vbl = Screen('Flip',w,vbl+(waitFrames-0.5)*ifi);
+
+    [~,~,keycode] = KbCheck(-1);
+		
+		if keycode(cKey)
+			abandon = 1;
+			flag = 0;
+			stopRecording(eL);
+			setOffline(eL);
+			trackerSetup(eL);
+			WaitSecs('YieldSecs',1);
+			break
+		end
     
     if keycode(spa)
         numChoice = 1;  %real angle speed ,no CCW and CW
         flag = 1;
-    end
+				abandon = 0;
+		end
+		
     if keycode(spb)
         numChoice = 2;  %real angle speed ,no CCW and CW
         flag = 1;
+				abandon = 0;
     end
     
     if keycode(ok) & flag == 1
-       break;
+       break
     end
     
     if keycode(esc)
-        ShowCursor;
-        break;
-    end
-    
+        breakLoop = true;
+        break
+		end
 end
-
 
 if flag==0
     abandon = 1;   %>10s no select,restart
 end
-
-
-return;

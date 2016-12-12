@@ -22,7 +22,7 @@ function varargout = Pinna_grating_PP(varargin)
 
 % Edit the above text to modify the response to help Pinna_grating_PP
 
-% Last Modified by GUIDE v2.5 09-Dec-2016 08:53:06
+% Last Modified by GUIDE v2.5 12-Dec-2016 12:35:29
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -141,8 +141,13 @@ is_binary_mask = get(handles.is_binary_mask,'Value');
 mask_diameter= str2num(get(handles.mask_diameter,'String'));
 mask_xpos = str2num(get(handles.mask_xpos,'String'));
 mask_ypos = str2num(get(handles.mask_ypos,'String'));
+use_eyelink = get(handles.use_eyelink,'Value');
 calib_file = get(handles.gamma_path,'String');
-Pinna_grating_main(angle_pattern,move_speed_i,angle_speed_i,ResultDir,one_trials,duration,match_time,is_binary_mask,mask_diameter,mask_xpos,mask_ypos,calib_file);
+fix_radius = str2num(get(handles.fix_radius,'String'));
+Pinna_grating_main(angle_pattern,move_speed_i,angle_speed_i,...
+	ResultDir,one_trials,duration,match_time,is_binary_mask,...
+	mask_diameter,mask_xpos,mask_ypos,use_eyelink,fix_radius,...
+	calib_file);
 
 % --- Executes on button press in analysis.
 function analysis_Callback(hObject, eventdata, handles)
@@ -468,3 +473,35 @@ Pinna_grating_withlineP(is_with_line,benchmark);
 % --- Executes on button press in benchmark_demo.
 function benchmark_demo_Callback(hObject, eventdata, handles)
 
+
+
+% --- Executes on button press in use_eyelink.
+function use_eyelink_Callback(hObject, eventdata, handles)
+% hObject    handle to use_eyelink (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of use_eyelink
+
+
+
+function fix_radius_Callback(hObject, eventdata, handles)
+% hObject    handle to fix_radius (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of fix_radius as text
+%        str2double(get(hObject,'String')) returns contents of fix_radius as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function fix_radius_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to fix_radius (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
