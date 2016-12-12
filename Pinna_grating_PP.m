@@ -22,7 +22,7 @@ function varargout = Pinna_grating_PP(varargin)
 
 % Edit the above text to modify the response to help Pinna_grating_PP
 
-% Last Modified by GUIDE v2.5 12-Dec-2016 12:35:29
+% Last Modified by GUIDE v2.5 12-Dec-2016 16:34:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -144,10 +144,11 @@ mask_ypos = str2num(get(handles.mask_ypos,'String'));
 use_eyelink = get(handles.use_eyelink,'Value');
 calib_file = get(handles.gamma_path,'String');
 fix_radius = str2num(get(handles.fix_radius,'String'));
+match_value = get(handles.match_menu,'Value');
 Pinna_grating_main(angle_pattern,move_speed_i,angle_speed_i,...
 	ResultDir,one_trials,duration,match_time,is_binary_mask,...
-	mask_diameter,mask_xpos,mask_ypos,use_eyelink,fix_radius,...
-	calib_file);
+	mask_diameter,mask_xpos,mask_ypos,match_value, use_eyelink,...
+	fix_radius,calib_file);
 
 % --- Executes on button press in analysis.
 function analysis_Callback(hObject, eventdata, handles)
@@ -501,6 +502,29 @@ function fix_radius_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in match_menu.
+function match_menu_Callback(hObject, eventdata, handles)
+% hObject    handle to match_menu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns match_menu contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from match_menu
+
+
+% --- Executes during object creation, after setting all properties.
+function match_menu_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to match_menu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');

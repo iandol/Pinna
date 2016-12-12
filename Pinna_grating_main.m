@@ -1,12 +1,12 @@
 function Pinna_grating_main(angle_pattern,move_speed_i,...
 	angle_speed_i,ResultDir,one_trials,duration,...
 	match_time,is_binary_mask,mask_diameter,mask_xpos,...
-	mask_ypos,use_eyelink,fix_radius,calib_file)
+	mask_ypos, match_value, use_eyelink,fix_radius,calib_file)
 
 global eL sM ana w wrect ifi waitFrames ang1 ang2 ...
-	white black gray approach spa spb esc ok ckey r1Origin ...
+	white black gray approach spa spb spc esc ok ckey r1Origin ...
 	abandon move_speed...
-	xc yc ovalRect r1Match  eleTexMatch1  txtColorMat ...
+	xc xxc yc ovalRect r1Match  eleTexMatch1  txtColorMat ...
 	shiftAng1 onFrames numChoice angSpeed1 ppd breakLoop;
 
 if nargin == 0; error('No parameters passed');end
@@ -28,6 +28,7 @@ esc = KbName('escape');
 ok = KbName('uparrow');
 spa = KbName('leftarrow');
 spb = KbName('rightarrow');
+spc = KbName('downarrow');
 ckey = KbName('c');
 
 %--------------fix parameters
@@ -170,6 +171,7 @@ try
 	
 	% screen areas
 	xc = (1:2).*wrect(3)/3; %match -only have A and B
+	xxc = (1:3).*wrect(3)/4; %match -only have A and B
 	yc = wrect(4)/2;
 	r1Match = round(45.0/sizePixel); %30mm/0.25=120pixels ;max radius at match
 	
@@ -654,8 +656,12 @@ try
 			end
 			
 			% get subject reponse
-			Pinna_grating_match(condition,match_time);
-			if abandon==0   %else restart,and don't save data
+			if match_value == 1
+				Pinna_grating_match(condition,match_time);
+			else
+				Pinna_grating_match3(condition,match_time);
+			end
+			if abandon == 0   %else restart,and don't save data
 				ana.result(1,iii) = numChoice;
 				response = numChoice;
 				iii = iii+1;
@@ -687,6 +693,7 @@ catch ME
 end
 
 	function saveMetaData()
+		ana.match_value = match_value;
 		ana.angle_pattern = angle_pattern;
 		ana.angle_index = pattern_angle_index;
 		ana.move_speed_index = move_speed_index;
