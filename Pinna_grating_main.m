@@ -680,7 +680,7 @@ try
 	end % breakLoop
 	close(sM);
 	ListenChar(0);ShowCursor;Priority(0);Screen('CloseAll');
-	if exist('ResultDir','dir')
+	if exist(ResultDir,'dir')
 		cd(ResultDir);
 	end		
 	disp(['===>>> SAVE, saved current data to: ' pwd]);
