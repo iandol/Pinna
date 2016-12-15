@@ -1,35 +1,35 @@
-function varargout = Pinna_grating_PP(varargin)
-% PINNA_GRATING_PP MATLAB code for Pinna_grating_PP.fig
-%      PINNA_GRATING_PP, by itself, creates a new PINNA_GRATING_PP or raises the existing
+function varargout = Pinna_grating(varargin)
+% PINNA_GRATING MATLAB code for Pinna_grating.fig
+%      PINNA_GRATING, by itself, creates a new PINNA_GRATING or raises the existing
 %      singleton*.
 %
-%      H = PINNA_GRATING_PP returns the handle to a new PINNA_GRATING_PP or the handle to
+%      H = PINNA_GRATING returns the handle to a new PINNA_GRATING or the handle to
 %      the existing singleton*.
 %
-%      PINNA_GRATING_PP('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in PINNA_GRATING_PP.M with the given input arguments.
+%      PINNA_GRATING('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in PINNA_GRATING.M with the given input arguments.
 %
-%      PINNA_GRATING_PP('Property','Value',...) creates a new PINNA_GRATING_PP or raises the
+%      PINNA_GRATING('Property','Value',...) creates a new PINNA_GRATING or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before Pinna_grating_PP_OpeningFcn gets called.  An
+%      applied to the GUI before Pinna_grating_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to Pinna_grating_PP_OpeningFcn via varargin.
+%      stop.  All inputs are passed to Pinna_grating_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help Pinna_grating_PP
+% Edit the above text to modify the response to help Pinna_grating
 
-% Last Modified by GUIDE v2.5 12-Dec-2016 16:34:06
+% Last Modified by GUIDE v2.5 14-Dec-2016 14:53:46
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @Pinna_grating_PP_OpeningFcn, ...
-                   'gui_OutputFcn',  @Pinna_grating_PP_OutputFcn, ...
+                   'gui_OpeningFcn', @Pinna_grating_OpeningFcn, ...
+                   'gui_OutputFcn',  @Pinna_grating_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,26 +44,26 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before Pinna_grating_PP is made visible.
-function Pinna_grating_PP_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before Pinna_grating is made visible.
+function Pinna_grating_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to Pinna_grating_PP (see VARARGIN)
+% varargin   command line arguments to Pinna_grating (see VARARGIN)
 
-% Choose default command line output for Pinna_grating_PP
+% Choose default command line output for Pinna_grating
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes Pinna_grating_PP wait for user response (see UIRESUME)
+% UIWAIT makes Pinna_grating wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = Pinna_grating_PP_OutputFcn(hObject, eventdata, handles) 
+function varargout = Pinna_grating_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -125,9 +125,9 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in start.
-function start_Callback(hObject, eventdata, handles)
-% hObject    handle to start (see GCBO)
+% --- Executes on button press in startPinna.
+function startPinna_Callback(hObject, eventdata, handles)
+% hObject    handle to startPinna (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 ResultDir = get(handles.file_path,'String');
@@ -141,14 +141,16 @@ is_binary_mask = get(handles.is_binary_mask,'Value');
 mask_diameter= str2num(get(handles.mask_diameter,'String'));
 mask_xpos = str2num(get(handles.mask_xpos,'String'));
 mask_ypos = str2num(get(handles.mask_ypos,'String'));
-use_eyelink = get(handles.use_eyelink,'Value');
+use_eyelink = logical(get(handles.use_eyelink,'Value'));
+use_staircase = logical(get(handles.use_staircase,'Value'));
 calib_file = get(handles.gamma_path,'String');
 fix_radius = str2num(get(handles.fix_radius,'String'));
 match_value = get(handles.match_menu,'Value');
+staircase_radial = get(handles.staircase1,'Value');
 Pinna_grating_main(angle_pattern,move_speed_i,angle_speed_i,...
 	ResultDir,one_trials,duration,match_time,is_binary_mask,...
 	mask_diameter,mask_xpos,mask_ypos,match_value, use_eyelink,...
-	fix_radius,calib_file);
+	use_staircase, fix_radius, staircase_radial, calib_file);
 
 % --- Executes on button press in analysis.
 function analysis_Callback(hObject, eventdata, handles)
@@ -528,4 +530,40 @@ function match_menu_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in use_staircase.
+function use_staircase_Callback(hObject, eventdata, handles)
+% hObject    handle to use_staircase (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of use_staircase
+
+
+% --- Executes on button press in staircase1.
+function staircase1_Callback(hObject, eventdata, handles)
+% hObject    handle to staircase1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of staircase1
+if get(hObject,'Value') == 1
+	set(handles.staircase2,'Value',0)
+else
+	set(handles.staircase2,'Value',1)
+end
+
+% --- Executes on button press in staircase2.
+function staircase2_Callback(hObject, eventdata, handles)
+% hObject    handle to staircase2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of staircase2
+if get(hObject,'Value') == 1
+	set(handles.staircase1,'Value',0)
+else
+	set(handles.staircase1,'Value',1)
 end
