@@ -65,7 +65,7 @@ is_mask_inner = 1;
 f = 0.05; %grating frequency
 grating_size = 15; %micropattern size (pixel)
 maskinner_radius = 2; %deg
-maskouter_radius = 10; %deg
+maskouter_radius = 9; %deg
 eachConditionSecs = duration; %sec
 % number of elements
 numElements = 20;
@@ -169,7 +169,7 @@ try
 	r1Match = round(45.0/sizePixel); %30mm/0.25=120pixels ;max radius at match
 	
 	% 3 fixPoint
-	fixRect = [xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2];
+	%fixRect = [xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2];
 	fixSideMatch = round(1.7/sizePixel);%6;
 	ovalRect = zeros(4,2);
 	ovalRect(1,1:2) = xc-0.5*fixSideMatch;
