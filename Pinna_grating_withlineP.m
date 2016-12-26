@@ -6,7 +6,7 @@ PsychDefaultSetup(2);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
 Screen('Preference', 'SkipSyncTests', 1)
-
+if IsLinux; Screen('Preference','ScreenToHead', 1, 0, 0); end
 % viewing parameters ------------------------------------------------------
 screenNumber = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
@@ -144,12 +144,12 @@ try
 	r1Origin = r1 * ppd;% convert degrees to pixels
 	
 	% radius of ring of elements
-	onFrames = fix(stdDis/(speeds*ifi) +1);  %li:ÎªÁË±ØÐë³¬³öscreen·¶Î§£¬È¡×î´óµÄÖ¡Êý£¬Í¬Ê±²»ÄÜ³¬¹ý°ë¾¶¹«Ê½µÄ¼«´óÖµ£¬ controllde through d0s and speeds
-	shiftAng = deg2rad(angSpeed*ifi); % degree of rotation per frame  %%ÕæÊµÐý×ª
+	onFrames = fix(stdDis/(speeds*ifi) +1);  %li:Îªï¿½Ë±ï¿½ï¿½ë³¬ï¿½ï¿½screenï¿½ï¿½Î§ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½Í¬Ê±ï¿½ï¿½ï¿½Ü³ï¿½ï¿½ï¿½ë¾¶ï¿½ï¿½Ê½ï¿½Ä¼ï¿½ï¿½ï¿½Öµï¿½ï¿½ controllde through d0s and speeds
+	shiftAng = deg2rad(angSpeed*ifi); % degree of rotation per frame  %%ï¿½ï¿½Êµï¿½ï¿½×ª
 	
 	if speeds == 0
 		onFrames = 200;  %
-		approach = 2;  %when speed = 0,  approach = 2£»
+		approach = 2;  %when speed = 0,  approach = 2ï¿½ï¿½
 	end
 	
 	breakLoop = false;
@@ -240,7 +240,7 @@ try
 		end
 		
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		if approach ==2   %%Ã¿¸ötrial ,ii ,jj ¡­¡­³õÊ¼»¯
+		if approach ==2   %%Ã¿ï¿½ï¿½trial ,ii ,jj ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 			ii = i;            jj = j;
 			kk = k;            ll = l;
 			mm = m;            nn = n;
@@ -434,7 +434,7 @@ try
 					end   %9
 				end  %8
 				
-			elseif approach == 2   %  Ö»ÎªÁË¾²Ö¹Ê±£¬ÕæÊµÐý×ª¿ÉÒÔÊµÏÖ
+			elseif approach == 2   %  Ö»Îªï¿½Ë¾ï¿½Ö¹Ê±ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½
 				ii = ii+1;
 				jj = jj+1;
 				kk = kk+1;

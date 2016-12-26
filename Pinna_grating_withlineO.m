@@ -6,6 +6,7 @@ PsychDefaultSetup(0);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
 Screen('Preference', 'SkipSyncTests', 0)
+if IsLinux; Screen('Preference','ScreenToHead', 1, 0, 0); end
 % screen
 screenID = max(Screen('Screens'));
 
@@ -38,7 +39,7 @@ ang2 = mod(offset2+linspace(0,360-360/num1,num1),360);  %
 ang2 = degtorad(ang2); %%
 
 % radius of ring of elements
-r1 = 0.2; % in degree  %% ³õÊ¼ringµÄ°ë¾¶
+r1 = 0.2; % in degree  %% ï¿½ï¿½Ê¼ringï¿½Ä°ë¾¶
 
 % fixation point rectangle
 fixSide = 8;% radius of fixation point is 8 pixel
@@ -108,13 +109,13 @@ try
 	
 	
 	% radius of ring of elements
-	onFrames = fix(stdDis/(speeds*ifi) +1);  %li:ÎªÁË±ØÐë³¬³öscreen·¶Î§£¬È¡×î´óµÄÖ¡Êý£¬Í¬Ê±²»ÄÜ³¬¹ý°ë¾¶¹«Ê½µÄ¼«´óÖµ£¬ controllde through d0s and speeds
+	onFrames = fix(stdDis/(speeds*ifi) +1);  %li:Îªï¿½Ë±ï¿½ï¿½ë³¬ï¿½ï¿½screenï¿½ï¿½Î§ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½Í¬Ê±ï¿½ï¿½ï¿½Ü³ï¿½ï¿½ï¿½ë¾¶ï¿½ï¿½Ê½ï¿½Ä¼ï¿½ï¿½ï¿½Öµï¿½ï¿½ controllde through d0s and speeds
 	waitFrames = 1;
-	shiftAng = degtorad(angSpeed*ifi); % degree of rotation per frame  %%ÕæÊµÐý×ª
+	shiftAng = degtorad(angSpeed*ifi); % degree of rotation per frame  %%ï¿½ï¿½Êµï¿½ï¿½×ª
 	
 	if speeds == 0
 		onFrames = 200;  %
-		approach = 2;  %when speed = 0,  approach = 2£»
+		approach = 2;  %when speed = 0,  approach = 2ï¿½ï¿½
 	end
 	
 	HideCursor;
@@ -143,7 +144,7 @@ try
 		%------------------------
 		
 		i = 1;  %when only has one ring
-		ii = 1;   %%%%%%%%%%%%%%%%%%%ii,jj,kk,ll,mm,nnÖ»Õë¶ÔÕæÊµÐý×ªµÄ¶øµÝÔöµÄ±äÁ¿£¬³ýÁËÁËspeed=0 Ê± Óëi,j,k,l,m,nÒ»ÖÂ£¬ÇÒspeed = 0Ê± Ò»Ö±µÝÔö£¡£¡£¡
+		ii = 1;   %%%%%%%%%%%%%%%%%%%ii,jj,kk,ll,mm,nnÖ»ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½×ªï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½speed=0 Ê± ï¿½ï¿½i,j,k,l,m,nÒ»ï¿½Â£ï¿½ï¿½ï¿½speed = 0Ê± Ò»Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		jj = 1;
 		kk = 1;
 		ll = 1;
@@ -245,7 +246,7 @@ try
 		end
 		
 		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		if approach ==2   %%Ã¿¸ötrial ,ii ,jj ¡­¡­³õÊ¼»¯
+		if approach ==2   %%Ã¿ï¿½ï¿½trial ,ii ,jj ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 			ii = i;
 			jj = j;
 			kk = k;
@@ -493,7 +494,7 @@ try
 			end
 			
 			
-			if approach == 2   %  Ö»ÎªÁË¾²Ö¹Ê±£¬ÕæÊµÐý×ª¿ÉÒÔÊµÏÖ
+			if approach == 2   %  Ö»Îªï¿½Ë¾ï¿½Ö¹Ê±ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½
 				ii = ii+1;
 				jj = jj+1;
 				kk = kk+1;
@@ -521,7 +522,7 @@ try
 		end
 		%       Pinna_grating_match(row);
 		%       ana.result(1,iii) = number_area_speed;
-		%result = ;ÊµÊ±¸³Öµ
+		%result = ;ÊµÊ±ï¿½ï¿½Öµ
 		%     Screen('FillRect',w,gray,[]);
 		%     Screen('FillOval',w,fixColor,[xCen-fixSide/2,yCen-fixSide/2,xCen+fixSide/2,yCen+fixSide/2]);
 		%     Screen('Flip',w);
