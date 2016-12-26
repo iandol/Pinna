@@ -23,6 +23,7 @@ useEyeLink = use_eyelink;
 isDummy = false;
 PsychDefaultSetup(0);
 Screen('Preference', 'SkipSyncTests', 0);
+if IsLinux; Screen('Preference','ScreenToHead', 1, 0, 0); end
 KbName('UnifyKeyNames');
 esc = KbName('escape');
 ok = KbName('uparrow');
@@ -307,15 +308,15 @@ try
 			if angSpeed1>0&&move_speed==0 %CW
 				speeds = 5*ppd;
 				onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*speeds*ifi))/(2*speeds*ifi));
-				approach = 2;  %when speed = 0,  approach = 2£»
-				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%ÕæÊµÐý×ª
+				approach = 2;  %when speed = 0,  approach = 2ï¿½ï¿½
+				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%ï¿½ï¿½Êµï¿½ï¿½×ª
 				condition = 3;
 			end
 			if angSpeed1<0&&move_speed==0  %CCW
 				speeds = 5*ppd;
 				onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*speeds*ifi))/(2*speeds*ifi));
-				approach = 2;  %when speed = 0,  approach = 2£»
-				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%ÕæÊµÐý×ª
+				approach = 2;  %when speed = 0,  approach = 2ï¿½ï¿½
+				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%ï¿½ï¿½Êµï¿½ï¿½×ª
 				condition = 4;
 			end
 			fprintf('===>>> Trial = %i speeds = %.2g approach = %.2g Condition = %.2g\n', iii,speeds,approach,condition);
@@ -372,7 +373,7 @@ try
 					
 			end
 			
-			if approach ==2   %%Ã¿¸ötrial ,ii ,jj ¡­¡­³õÊ¼»¯
+			if approach ==2   %%Ã¿ï¿½ï¿½trial ,ii ,jj ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 				ii = 1;			jj = 1;			kk = 1;			ll = 1;
 				mm = 1;			nn = 1;			oo = 1;			pp = 1;
 				qq = 1;			rr = 1;			ss = 1;			tt = 1;
@@ -623,7 +624,7 @@ try
 					end %2
 				end %approach
 				
-				%                 if approach == 2   %  Ö»ÎªÁË¾²Ö¹Ê±£¬ÕæÊµÐý×ª¿ÉÒÔÊµÏÖ
+				%                 if approach == 2   %  Ö»Îªï¿½Ë¾ï¿½Ö¹Ê±ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½
 				ii = ii+1;				jj = jj+1;
 				kk = kk+1;				ll = ll+1;
 				mm = mm+1;				nn = nn+1;
