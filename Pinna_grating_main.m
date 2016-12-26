@@ -64,7 +64,7 @@ is_mask_outer = 1;
 is_mask_inner = 1;
 f = 0.05; %grating frequency
 grating_size = 15; %micropattern size (pixel)
-maskinner_radius = 2; %deg
+maskinner_radius = 1.5; %deg
 maskouter_radius = 9; %deg
 eachConditionSecs = duration; %sec
 % number of elements
@@ -116,7 +116,10 @@ try
 		gray = white/2;
 	end
 	inc = white-gray;
-	[w,wrect] = Screen('OpenWindow',screenID,gray,windowed);
+	PsychImaging('PrepareConfiguration');
+	PsychImaging('AddTask', 'General', 'UseFastOffscreenWindows');
+	%PsychImaging('AddTask', 'General', 'FloatingPoint32BitIfPossible');
+	[w,wrect] = PsychImaging('OpenWindow',screenID,gray,windowed);
 	ifi = Screen('GetFlipInterval',w);
 	halfifi = ifi/2;
 	xCen = wrect(3)/2;
@@ -769,7 +772,7 @@ end
 		initialiseTask(task);
 		
 		if staircase_use_radial
-			stims = linspace(0.022,maxTime,50);
+			stims = linspace(min(radial_speed_i),maxTime,50);
 			priorAlphaB = [0:0.01:maxTime];
 			priorAlphaW = [0:0.01:maxTime];
 			priorBeta = [0.5:0.5:4]; %our slope
