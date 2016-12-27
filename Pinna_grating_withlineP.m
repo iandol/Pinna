@@ -83,6 +83,7 @@ try
 	allPars = repmat(mypars,1,num_rings*num1);
 	gabortex = CreateProceduralGabor(w, sizeGabor(1), sizeGabor(2), nonsymmetric, backgroundColorOffset, disableNorm, contrastPreMultiplicator);
 	
+	
 	srcRect = Screen('Rect',gabortex);
 	dstRect1 = ScaleRect(srcRect, 0.25, 0.25);
 	dstRect2 = srcRect;
