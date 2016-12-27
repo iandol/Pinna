@@ -6,7 +6,6 @@ PsychDefaultSetup(0);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
 Screen('Preference', 'SkipSyncTests', 0)
-if IsLinux; Screen('Preference','ScreenToHead', 1, 0, 0); end
 % screen
 screenID = max(Screen('Screens'));
 

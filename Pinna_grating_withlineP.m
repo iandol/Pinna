@@ -6,7 +6,6 @@ PsychDefaultSetup(2);
 KbName('UnifyKeyNames');
 esc = KbName('escape');
 Screen('Preference', 'SkipSyncTests', 1)
-if IsLinux; Screen('Preference','ScreenToHead', 1, 0, 0); end
 % viewing parameters ------------------------------------------------------
 screenNumber = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
@@ -62,7 +61,7 @@ try
 	halfifi = ifi/2;
 	ppd = sM.ppd;
 	[os,od,oc]=Screen('BlendFunction',w);
-	
+	fprintf('\n---> Original Blend: %s %s %s\n', os, od, oc)
 	% screen
 	white = sM.screenVals.white;
 	black = sM.screenVals.black;
@@ -479,7 +478,7 @@ try
 catch ME
 	Screen('CloseAll');
 	Priority(0);
-	getReport(ME);
+	getReport(ME)
 end
 
 return;

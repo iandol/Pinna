@@ -23,7 +23,6 @@ useEyeLink = use_eyelink;
 isDummy = false;
 PsychDefaultSetup(0);
 Screen('Preference', 'SkipSyncTests', 0);
-if IsLinux; Screen('Preference','ScreenToHead', 1, 0, 0); end
 KbName('UnifyKeyNames');
 esc = KbName('escape');
 ok = KbName('uparrow');
