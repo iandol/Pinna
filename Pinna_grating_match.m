@@ -1,8 +1,8 @@
-function Pinna_grating_match(condition,match_time)
-global sM w wrect ifi waitFrames ang1 ang2 ...
-	spa spb spc ok esc cKey onFrames approach r1Origin abandon ...
+function Pinna_grating_match(condition, match_time)
+global sM w wrect ana ang1 ang2 ...
+	spa spb ok esc cKey onFrames approach r1Origin abandon ...
   xc yc r1Match eleTexMatch1 txtColorMat ...
-	numChoice ppd breakLoop
+	numChoice breakLoop
 
 abandon = 1;
 flag = 0;
@@ -11,17 +11,17 @@ num_rings = 3;
 eachConditionSecs = match_time;  %>10s abandon
 colorMat = txtColorMat(:,:,1); % all white
 %%%%%move_speed = 1
-move_speed = 1 * ppd;
+move_speed = 1 * ana.ppd;
 r_dis = r1Match-r1Origin;
-onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*move_speed*ifi))/(2*move_speed*ifi));
+onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*move_speed*ana.ifi))/(2*move_speed*ana.ifi));
 
 %%%%%shiftAng = 20deg
 shiftAng(1:2) = 0;
 
 approach = 2;
 
-shiftAng(1) = -pi*(20.*ifi)/180;
-shiftAng(2) = pi*(20.*ifi)/180;
+shiftAng(1) = -pi*(20.*ana.ifi)/180;
+shiftAng(2) = pi*(20.*ana.ifi)/180;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%expansion
 i = 1;  %when only has one ring
@@ -171,10 +171,10 @@ while vbl < vblendtime
     ii = ii+1;
     
 		sM.drawCross(0.3,[0 0 0 1]);
-    Screen('DrawText',w,'a',wrect(3)/3,wrect(4)/2+200,colorMat(1,:));
-    Screen('DrawText',w,'b',wrect(3)*2/3,wrect(4)/2+200,colorMat(2,:));
+    Screen('DrawText', w, 'a', wrect(3)/3, wrect(4)/2+200, colorMat(1,:));
+    Screen('DrawText', w, 'b', wrect(3)*2/3, wrect(4)/2+200, colorMat(2,:));
 
-    vbl = Screen('Flip',w,vbl+(waitFrames-0.5)*ifi);
+    vbl = Screen('Flip', w, vbl + ana.halfifi);
 
     [~,~,keycode] = KbCheck(-1);
 		

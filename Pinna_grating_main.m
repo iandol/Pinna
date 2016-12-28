@@ -7,12 +7,13 @@ function Pinna_grating_main(angle_pattern,radial_speed_i,...
 global eL sM ana w wrect ifi waitFrames ang1 ang2 ...
 	white black gray approach spa spb spc esc ok ckey r1Origin ...
 	abandon move_speed xc xxc yc ovalRect r1Match  eleTexMatch1 ...
-	txtColorMat shiftAng1 onFrames numChoice angSpeed1 ppd breakLoop;
+	txtColorMat shiftAng1 onFrames numChoice rot_speed breakLoop;
 
 if nargin == 0; error('No parameters passed');end
 
 ins = inputdlg({'Subject Name','Comments (room, lights etc.)'});
-ana=[];
+if isempty(ins); return; end
+ana=[]; %this holds the experiment data and parameters
 ana.subject = ins{1};
 ana.comments = ins{2};
 ana.date = datestr(datetime);
@@ -24,7 +25,7 @@ isDummy = false;
 PsychDefaultSetup(0);
 Screen('Preference', 'SkipSyncTests', 0);
 KbName('UnifyKeyNames');
-esc = KbName('escape');
+esc = KbName('q');
 ok = KbName('uparrow');
 spa = KbName('leftarrow');
 spb = KbName('rightarrow');
@@ -51,7 +52,7 @@ screenID = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
 sizePixel = 10 / pixelsPerCm;   %in mm, calculated from different Screen  ,has different value
 distance = 56.5;
-windowed = [];
+windowed = [0 0 1000 1000];
 backgroundColor = [127.5 127.5 127.5];
 stdDis = distance*10; %mm
 approach = 1;%[0 1]; % simulate approaching (1) or leaving (0)
@@ -68,7 +69,7 @@ maskinner_radius = 1.5; %deg
 maskouter_radius = 9; %deg
 eachConditionSecs = duration; %sec
 % number of elements
-numElements = 20;
+numElements = 10;
 
 %for 1st ring
 offset1 = 0;
@@ -120,12 +121,12 @@ try
 	PsychImaging('AddTask', 'General', 'UseFastOffscreenWindows');
 	%PsychImaging('AddTask', 'General', 'FloatingPoint32BitIfPossible');
 	[w,wrect] = PsychImaging('OpenWindow',screenID,gray,windowed);
-	ifi = Screen('GetFlipInterval',w);
-	halfifi = ifi/2;
+	ana.ifi = Screen('GetFlipInterval',w);
+	ana.halfifi = ana.ifi/2;
 	xCen = wrect(3)/2;
 	yCen = wrect(4)/2;
 	ScreenWidth = round(wrect(3)*sizePixel);
-	ppd = wrect(3)/2/atand(ScreenWidth/2/stdDis);
+	ana.ppd = wrect(3)/2/atand(ScreenWidth/2/stdDis);
 	
 	sM = screenManager;
 	sM.screen = screenID;
@@ -180,10 +181,10 @@ try
 	ovalRect(3,1:2) = xc+0.5*fixSideMatch;
 	ovalRect(4,1:2) = yc+0.5*fixSideMatch;
 	
-	r1Origin = r1 * ppd;% convert degrees to pixels
+	r1Origin = r1 * ana.ppd;% convert degrees to pixels
 	
 	if is_binary_mask
-		mask_diameter = mask_diameter * ppd;
+		mask_diameter = mask_diameter * ana.ppd;
 		radius = mask_diameter/2; %diameter to radius
 		masksize = [wrect(4),wrect(3)];
 		mask = ones(masksize(1),masksize(2),2)*gray;
@@ -222,8 +223,8 @@ try
 	end
 	
 	%-----------------outside mask & inside mask-------------------------
-	maskinner_radius = maskinner_radius * ppd;% convert degrees to pixels
-	maskouter_radius = maskouter_radius * ppd;% convert degrees to pixels
+	maskinner_radius = maskinner_radius * ana.ppd;% convert degrees to pixels
+	maskouter_radius = maskouter_radius * ana.ppd;% convert degrees to pixels
 	
 	if is_mask_outer == 1
 		masksize = [wrect(4),wrect(3)];
@@ -288,9 +289,9 @@ try
 				end
 			else
 				waitFrames = 1;
-				angSpeed1 = rotation_speed_i(rotation_speed_index(iii));
-				shiftAng1 = pi*(angSpeed1.*ifi)/180;  %degtorad(angSpeed1.*ifi);
-				move_speed = radial_speed_i(radial_speed_index(iii)) * ppd;
+				rot_speed = rotation_speed_i(rotation_speed_index(iii));
+				shiftAng1 = deg2rad( rot_speed .* ifi);
+				move_speed = radial_speed_i(radial_speed_index(iii)) * ana.ppd;
 			end
 			% radius of ring of elements
 			if move_speed>0 %Exp And Exp+CW And Exp+CCW
@@ -307,21 +308,21 @@ try
 				shiftAng = shiftAng1;
 				condition = 2;
 			end
-			if angSpeed1>0&&move_speed==0 %CW
-				speeds = 5*ppd;
+			if rot_speed>0&&move_speed==0 %CW
+				speeds = 5*ana.ppd;
 				onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*speeds*ifi))/(2*speeds*ifi));
 				approach = 2;  %when speed = 0,  approach = 2��
 				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%��ʵ��ת
 				condition = 3;
 			end
-			if angSpeed1<0&&move_speed==0  %CCW
-				speeds = 5*ppd;
+			if rot_speed<0&&move_speed==0  %CCW
+				speeds = 5*ana.ppd;
 				onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*speeds*ifi))/(2*speeds*ifi));
 				approach = 2;  %when speed = 0,  approach = 2��
 				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%��ʵ��ת
 				condition = 4;
 			end
-			fprintf('===>>> Trial = %i speeds = %.2g approach = %.2g Condition = %.2g\n', iii,speeds,approach,condition);
+			fprintf('==>> Trial = %i rot_speed = %g | move_speed = %g | speed = %g | approach = %g | Condition = %g\n', iii,rot_speed,move_speed,speeds,approach,condition);
 			
 			row = 1;
 			column = pattern_angle_index(iii);
@@ -643,8 +644,8 @@ try
 						break %break the while loop
 					end
 				end
-				[vbl,~,~,missed] = Screen('Flip',w,vbl+halfifi);
-				if missed>0;fprintf('---!!! Missed frame !!!---\n');end
+				[vbl,~,~,missed] = Screen('Flip', w, vbl + ana.halfifi);
+				if missed>0 && isempty(windowed); fprintf('---!!! Missed frame !!!---\n'); end
 				
 				%------escape li
 				[~, ~, keycode] = KbCheck(-1);
@@ -683,9 +684,9 @@ try
 				iii = iii+1;
 				doPlot();
 			end
+			fprintf('==>> Trial = %i RESPONSE = %.2g\n', thisTrial,response);
 			%log response to eyelink
 			if useEyeLink
-				fprintf('===>>> Trial = %i RESPONSE = %.2g\n', thisTrial,response);
 				resetFixation(eL);
 				stopRecording(eL);
 				edfMessage(eL,['TRIAL_RESULT ' num2str(response)]);
@@ -705,7 +706,7 @@ try
 	if exist(ResultDir,'dir')
 		cd(ResultDir);
 	end
-	disp(['===>>> SAVE, saved current data to: ' pwd]);
+	disp(['==>> SAVE, saved current data to: ' pwd]);
 	save([nameExp '.mat'],'ana','eL');
 	if useEyeLink == true; close(eL); end
 catch ME
@@ -735,8 +736,6 @@ end
 		ana.ResultDir =  ResultDir;
 		ana.backgroundColor = backgroundColor;
 		ana.stdDis = stdDis;
-		ana.halfifi = halfifi;
-		ana.ifi = ifi;
 		ana.xCen = xCen;
 		ana.yCen = yCen;
 		ana.num_rings = num_rings;
@@ -754,8 +753,7 @@ end
 		ana.firstFixInit = firstFixInit;
 		ana.firstFixTime = firstFixTime;
 		ana.firstFixRadius = firstFixRadius;
-		ana.strictFixation = strictFixation;
-		
+		ana.strictFixation = strictFixation;	
 	end
 
 	function setupTrial()
@@ -772,33 +770,38 @@ end
 		initialiseTask(task);
 		
 		if staircase_use_radial
-			stims = linspace(min(radial_speed_i),maxTime,50);
-			priorAlphaB = [0:0.01:maxTime];
-			priorAlphaW = [0:0.01:maxTime];
+			stims = linspace(min(radial_speed_i),max(radial_speed_i),50);
+			priorAlpha0Neg = linspace(0, min(radial_speed_i),25);
+			priorAlpha0Plus = linspace(0, max(radial_speed_i),25);
+			priorAlpha45Neg = linspace(0, min(radial_speed_i),25);
+			priorAlpha45Plus = linspace(0, max(radial_speed_i),25);
+			priorAlpha135Neg = linspace(0, min(radial_speed_i),25);
+			priorAlpha135Plus = linspace(0, max(radial_speed_i),25);
 			priorBeta = [0.5:0.5:4]; %our slope
 			priorGammaRange = 0.5;  %fixed value (using vector here would make it a free parameter)
-			priorLambdaRange = [0.02:0.02:0.12]; %ditto
+			priorLambdaRange = [0.02:0.02:0.1]; %ditto
 		else
-			stims = linspace(0.022,maxTime,50);
-			priorAlphaB = [0:0.01:maxTime];
-			priorAlphaW = [0:0.01:maxTime];
+			stims = linspace(min(rotation_speed_i),max(rotation_speed_i),50);
+			priorAlpha0 = stims;
+			priorAlpha45 = stims;
+			priorAlpha135 = stims;
 			priorBeta = [0.5:0.5:4]; %our slope
 			priorGammaRange = 0.5;  %fixed value (using vector here would make it a free parameter)
 			priorLambdaRange = [0.02:0.02:0.12]; %ditto
 		end
 		
 		task0 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
-			'priorAlphaRange', priorAlphaB, 'priorBetaRange', priorBeta,...
+			'priorAlphaRange', priorAlpha0, 'priorBetaRange', priorBeta,...
 			'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
 			'numTrials', stopRule,'marginalize','lapse');
 		
 		task45 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
-			'priorAlphaRange', priorAlphaW, 'priorBetaRange', priorBeta,...
+			'priorAlphaRange', priorAlpha45, 'priorBetaRange', priorBeta,...
 			'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
 			'numTrials', stopRule,'marginalize','lapse');
 		
 		task135 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
-			'priorAlphaRange', priorAlphaW, 'priorBetaRange', priorBeta,...
+			'priorAlphaRange', priorAlpha135, 'priorBetaRange', priorBeta,...
 			'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
 			'numTrials', stopRule,'marginalize','lapse');
 		

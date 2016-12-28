@@ -1,8 +1,8 @@
 function Pinna_grating_match3(condition,match_time)
-global sM w wrect ifi waitFrames ang1 ang2 ...
+global sM w wrect ana ang1 ang2 ...
 	spa spb spc ok esc cKey onFrames approach r1Origin abandon ...
-	xc xxc yc r1Match  eleTexMatch1 txtColorMat ...
-	shiftAng1 shiftAng2 numChoice ppd breakLoop
+	xxc yc r1Match eleTexMatch1 txtColorMat ...
+	numChoice breakLoop
 
 abandon = 1;
 flag = 0;
@@ -11,37 +11,37 @@ num_rings = 3;
 eachConditionSecs = match_time;  %>10s abandon
 colorMat = txtColorMat(:,:,1); % all white
 %%%%%move_speed = 1
-move_speed = 1 * ppd;
+move_speed = 1 * ana.ppd;
 r_dis = r1Match-r1Origin;
-onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*move_speed*ifi))/(2*move_speed*ifi));
+onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*move_speed*ana.ifi))/(2*move_speed*ana.ifi));
 
 %%%%%shiftAng = 20deg
 shiftAng(1:3) = 0;
 if condition == 1  %exp
 	approach = 1;
-	shiftAng(1) =  -pi*(20.*ifi)/180;%-shiftAng1;
+	shiftAng(1) =  -pi*(20.*ana.ifi)/180;%-shiftAng1;
 	shiftAng(2) = 0;
-	shiftAng(3) = pi*(20.*ifi)/180;%shiftAng1;
+	shiftAng(3) = pi*(20.*ana.ifi)/180;%shiftAng1;
 end
 if condition == 2  %con
 	approach = 0;
-	shiftAng(1) = -pi*(20.*ifi)/180;%-shiftAng1;
+	shiftAng(1) = -pi*(20.*ana.ifi)/180;%-shiftAng1;
 	shiftAng(2) = 0;
-	shiftAng(3) = pi*(20.*ifi)/180;%shiftAng1;
+	shiftAng(3) = pi*(20.*ana.ifi)/180;%shiftAng1;
 end
 if condition == 3
 	approach = 2;
 	%     shiftAng(1:3) =  shiftAng1; % CW
-	shiftAng(1) = pi*(20.*ifi)/180;%shiftAng1;
-	shiftAng(2) = pi*(20.*ifi)/180;%shiftAng1;
-	shiftAng(3) = pi*(20.*ifi)/180;%shiftAng1;
+	shiftAng(1) = pi*(20.*ana.ifi)/180;%shiftAng1;
+	shiftAng(2) = pi*(20.*ana.ifi)/180;%shiftAng1;
+	shiftAng(3) = pi*(20.*ana.ifi)/180;%shiftAng1;
 end
 if condition == 4
 	approach = 2;
 	%     shiftAng(1:3) =  shiftAng2; % CCW
-	shiftAng(1) = -pi*(20.*ifi)/180;%shiftAng2;
-	shiftAng(2) = -pi*(20.*ifi)/180;%shiftAng2;
-	shiftAng(3) = -pi*(20.*ifi)/180;%shiftAng2;
+	shiftAng(1) = -pi*(20.*ana.ifi)/180;%shiftAng2;
+	shiftAng(2) = -pi*(20.*ana.ifi)/180;%shiftAng2;
+	shiftAng(3) = -pi*(20.*ana.ifi)/180;%shiftAng2;
 end
 flag = 0;
 
@@ -581,11 +581,6 @@ if condition==1 || condition ==2
 		qq = qq +1;
 		rr = rr +1;
 		
-		%         end
-		vbl = Screen('Flip',w,vbl+(waitFrames-0.5)*ifi);
-		
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		
 		sM.drawCross(0.3,[0 0 0 1]);
 		
 		Screen('DrawText',w,'a',wrect(3)/4,wrect(4)/2+200,colorMat(1,:));
@@ -594,13 +589,7 @@ if condition==1 || condition ==2
 		
 		Screen('DrawText',w,'c',wrect(3)*3/4,wrect(4)/2+200,colorMat(3,:));
 		
-		%     Screen('DrawText',w,'4',wrect(3)*7/8,0+20,colorMat(4,:));
-		%
-		%     Screen('DrawText',w,'5',wrect(3)/8,wrect(4)/2+20,colorMat(5,:));
-		%
-		%     Screen('DrawText',w,'6',wrect(3)*3/8,wrect(4)/2+20,colorMat(6,:));
-		%
-		%     Screen('DrawText',w,'7',wrect(3)*5/8,wrect(4)/2+20,colorMat(7,:));
+		vbl = Screen('Flip', w, vbl + ana.halfifi);
 		
 		[keyisdown,secs,keycode] = KbCheck(-1);
 		
@@ -1256,11 +1245,6 @@ elseif condition == 3 || condition == 4
 		qq2 = qq2+1;
 		rr2 = rr2+1;
 		
-		
-		vbl = Screen('Flip',w,vbl+(waitFrames-0.5)*ifi);
-		
-		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-		
 		sM.drawCross(0.3,[0 0 0 1]);
 		
 		Screen('DrawText',w,'a',wrect(3)/4,wrect(4)/2+200,colorMat(1,:));
@@ -1269,6 +1253,7 @@ elseif condition == 3 || condition == 4
 		
 		Screen('DrawText',w,'c',wrect(3)*3/4,wrect(4)/2+200,colorMat(3,:));
 		
+		vbl = Screen('Flip', w, vbl + ana.halfifi);
 		
 		[keyisdown,secs,keycode] = KbCheck(-1);
 		
