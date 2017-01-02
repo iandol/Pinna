@@ -757,66 +757,65 @@ end
 	end
 
 	function setupTrial()
+		
 		stopCriterion = 'trials';
 		stopRule = 40;
 		usePriors = false;
+		grain = 100;
+		
 		task = stimulusSequence();
 		task.name = nameExp;
 		task.nVar(1).name = 'angle';
 		task.nVar(1).stimulus = [1];
-		task.nVar(1).values = [0 45 135];
+		task.nVar(1).values = [45 90 135];
 		task.nBlocks = length(task.nVar(1).values) * stopRule;
-		randomiseStimuli(task);
-		initialiseTask(task);
+		initialise(task);
 		
 		if staircase_use_radial
-			stims = linspace(min(radial_speed_i),max(radial_speed_i),50);
-			priorAlpha0Neg = linspace(0, min(radial_speed_i),25);
-			priorAlpha0Plus = linspace(0, max(radial_speed_i),25);
-			priorAlpha45Neg = linspace(0, min(radial_speed_i),25);
-			priorAlpha45Plus = linspace(0, max(radial_speed_i),25);
-			priorAlpha135Neg = linspace(0, min(radial_speed_i),25);
-			priorAlpha135Plus = linspace(0, max(radial_speed_i),25);
-			priorBeta = [0.5:0.5:4]; %our slope
+			stims = linspace(min(radial_speed_i),max(radial_speed_i),10);
+			priorAlpha90 = linspace(min(radial_speed_i), max(radial_speed_i),grain);
+			priorAlpha45 = linspace(mix(radial_speed_i), max(radial_speed_i),grain);
+			priorAlpha135 = linspace(min(radial_speed_i), max(radial_speed_i),grain);
+			priorBeta = [0.5:0.5:5]; %our slope
 			priorGammaRange = 0.5;  %fixed value (using vector here would make it a free parameter)
-			priorLambdaRange = [0.02:0.02:0.1]; %ditto
+			priorLambdaRange = 0.02; %ditto
 		else
-			stims = linspace(min(rotation_speed_i),max(rotation_speed_i),50);
-			priorAlpha0 = stims;
-			priorAlpha45 = stims;
-			priorAlpha135 = stims;
-			priorBeta = [0.5:0.5:4]; %our slope
+			stims = linspace(min(rotation_speed_i),max(rotation_speed_i),10);
+			priorAlpha90 = linspace(min(rotation_speed_i),max(rotation_speed_i),grain);
+			priorAlpha45 = linspace(min(rotation_speed_i),max(rotation_speed_i),grain);
+			priorAlpha135 = linspace(min(rotation_speed_i),max(rotation_speed_i),grain);
+			priorBeta = [0.5:0.5:5]; %our slope
 			priorGammaRange = 0.5;  %fixed value (using vector here would make it a free parameter)
-			priorLambdaRange = [0.02:0.02:0.12]; %ditto
+			priorLambdaRange = 0.02; %ditto
 		end
 		
-		task0 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
-			'priorAlphaRange', priorAlpha0, 'priorBetaRange', priorBeta,...
+		staircase90 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
+			'priorAlphaRange', priorAlpha90, 'priorBetaRange', priorBeta,...
 			'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
 			'numTrials', stopRule,'marginalize','lapse');
 		
-		task45 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
+		staircase45 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
 			'priorAlphaRange', priorAlpha45, 'priorBetaRange', priorBeta,...
 			'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
 			'numTrials', stopRule,'marginalize','lapse');
 		
-		task135 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
+		staircase135 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
 			'priorAlphaRange', priorAlpha135, 'priorBetaRange', priorBeta,...
 			'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
 			'numTrials', stopRule,'marginalize','lapse');
 		
 		if usePriors
-			prior0 = PAL_pdfNormal(taskB.priorAlphas,0.25,1).*PAL_pdfNormal(taskB.priorBetas,2,3);
-			prior45 = PAL_pdfNormal(taskW.priorAlphas,0.25,1).*PAL_pdfNormal(taskW.priorBetas,2,3);
-			prior135 = PAL_pdfNormal(taskW.priorAlphas,0.25,1).*PAL_pdfNormal(taskW.priorBetas,2,3);
+			prior90 = PAL_pdfNormal(priorAlpha90,0,1).*PAL_pdfNormal(priorBeta,2,3);
+			prior45 = PAL_pdfNormal(priorAlpha45,-10,1).*PAL_pdfNormal(priorBeta,2,3);
+			prior135 = PAL_pdfNormal(priorAlpha135,10,1).*PAL_pdfNormal(priorBeta,2,3);
 			% 	figure;
-			% 	subplot(1,3,1);imagesc(task0.priorAlphaRange,task0.priorBetaRange,priorB);axis square
-			% 	subplot(1,3,2);imagesc(task45.priorAlphaRange,task45.priorBetaRange,priorW); axis square
-			% 	subplot(1,3,3);imagesc(task135.priorAlphaRange,task135.priorBetaRange,priorW); axis square
+			% 	subplot(1,3,1);imagesc(staircase90.priorAlphaRange,staircase90.priorBetaRange,prior90);axis square
+			% 	subplot(1,3,2);imagesc(staircase45.priorAlphaRange,staircase45.priorBetaRange,prior45); axis square
+			% 	subplot(1,3,3);imagesc(staircase135.priorAlphaRange,staircase135.priorBetaRange,prior135); axis square
 			% 	xlabel('Threshold');ylabel('Slope');title('Initial Bayesian Priors')
-			task0 = PAL_AMPM_setupPM(taskB,'prior',prior0);
-			task45 = PAL_AMPM_setupPM(taskW,'prior',prior45);
-			task135 = PAL_AMPM_setupPM(taskW,'prior',prior135);
+			staircase90 = PAL_AMPM_setupPM(staircase0,'prior',prior90);
+			staircase45 = PAL_AMPM_setupPM(staircase45,'prior',prior45);
+			staircase135 = PAL_AMPM_setupPM(staircase135,'prior',prior135);
 		end
 	end
 
