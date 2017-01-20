@@ -7,7 +7,8 @@ function Pinna_grating_main(angle_pattern,radial_speed_i,...
 global eL sM ana w wrect ifi waitFrames ang1 ang2 ...
 	white black gray approach spa spb spc esc ok ckey r1Origin ...
 	abandon move_speed xc xxc yc ovalRect r1Match  eleTexMatch1 ...
-	txtColorMat shiftAng1 onFrames numChoice rot_speed breakLoop;
+	txtColorMat shiftAng1 onFrames numChoice rot_speed breakLoop ...
+	prior45 prior90 prior135;
 
 if nargin == 0; error('No parameters passed');end
 
@@ -52,7 +53,7 @@ screenID = max(Screen('Screens'));%-1;
 pixelsPerCm = 35;
 sizePixel = 10 / pixelsPerCm;   %in mm, calculated from different Screen  ,has different value
 distance = 56.5;
-windowed = [0 0 1000 1000];
+windowed = [];
 backgroundColor = [127.5 127.5 127.5];
 stdDis = distance*10; %mm
 approach = 1;%[0 1]; % simulate approaching (1) or leaving (0)
@@ -65,11 +66,11 @@ is_mask_outer = 1;
 is_mask_inner = 1;
 f = 0.05; %grating frequency
 grating_size = 15; %micropattern size (pixel)
-maskinner_radius = 1.5; %deg
+maskinner_radius = 2.5; %deg
 maskouter_radius = 9; %deg
 eachConditionSecs = duration; %sec
 % number of elements
-numElements = 10;
+numElements = 20;
 
 %for 1st ring
 offset1 = 0;
@@ -86,16 +87,21 @@ r1 = 0.4; % in degree
 numgaborAngles = size(gaborAngles,2);
 num_move_speed = length(radial_speed_i);
 num_angle_speed = length(rotation_speed_i);
-if num_move_speed==num_angle_speed
-	trials = numgaborAngles * one_trials * num_move_speed;  %be sure one by one
-else
-	msgbox('The number of two kinds of speed is different', 'warning');
-end
+% if num_move_speed==num_angle_speed
+% 	trials = numgaborAngles * one_trials * num_move_speed;  %be sure one by one
+% else
+% 	msgbox('The number of two kinds of speed is different', 'warning');
+% end
 
 if use_staircase
-	gabor_angle = []; moving_speed = [];  angular_speed = [];
 	setupTrial();
+	pattern_angle_index = ones(1,stopRule*3);
+	column_rank = randperm(stopRule*3);
+	for i = 1:stopRule*3
+		pattern_angle_index(i) = fix((column_rank(i)-1)/stopRule)+1;
+	end
 else
+	trials = numgaborAngles * one_trials * num_move_speed;
 	column_rank = randperm(trials);  %rand(50)
 	pattern_angle_index = ones(1,trials); %value is 1~num_angle
 	% condition_index = ones(1,trials); %value is 1~num_conditions
@@ -278,14 +284,35 @@ try
 		Screen('Flip',w);
 		WaitSecs('YieldSecs',1);
 		Priority(MaxPriority(w));
+		ifi = ana.ifi;
 		
 		%======================SET UP THIS TRIAL PARAMATERS========================
 		if iii<=trials %initial fixation held
 			if use_staircase
 				if staircase_use_radial
-					
+					waitFrames = 1;
+					rot_speed = rotation_speed_i(1);
+					shiftAng1 = deg2rad( rot_speed .* ifi);
+					if pattern_angle_index(iii) == 1
+						move_speed = staircase45.xCurrent * ana.ppd;
+					elseif pattern_angle_index(iii) == 2
+						move_speed = staircase90.xCurrent * ana.ppd;
+					elseif pattern_angle_index(iii) == 3
+						move_speed = staircase135.xCurrent * ana.ppd;
+					end
 				else
-					
+					waitFrames = 1;
+					if pattern_angle_index(iii) == 1
+						rot_speed = staircase45.xCurrent;
+						shiftAng1 = deg2rad( rot_speed .* ifi);
+					elseif pattern_angle_index(iii) == 2
+						rot_speed = staircase90.xCurrent;
+						shiftAng1 = deg2rad( rot_speed .* ifi);
+					elseif pattern_angle_index(iii) == 3
+						rot_speed = staircase135.xCurrent;
+						shiftAng1 = deg2rad( rot_speed .* ifi);
+					end
+					move_speed = radial_speed_i(1) * ana.ppd;
 				end
 			else
 				waitFrames = 1;
@@ -311,15 +338,15 @@ try
 			if rot_speed>0&&move_speed==0 %CW
 				speeds = 5*ana.ppd;
 				onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*speeds*ifi))/(2*speeds*ifi));
-				approach = 2;  %when speed = 0,  approach = 2��
-				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%��ʵ��ת
+				approach = 2;  %when speed = 0,  approach = 2?�?�?
+				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%?�?��?�?��?
 				condition = 3;
 			end
 			if rot_speed<0&&move_speed==0  %CCW
 				speeds = 5*ana.ppd;
 				onFrames = fix((r_dis + sqrt(r_dis*r_dis + 4*r_dis*speeds*ifi))/(2*speeds*ifi));
-				approach = 2;  %when speed = 0,  approach = 2��
-				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%��ʵ��ת
+				approach = 2;  %when speed = 0,  approach = 2?�?�?
+				shiftAng = shiftAng1; %degtorad(angSpeed*ifi); % degree of rotation per frame  %%?�?��?�?��?
 				condition = 4;
 			end
 			fprintf('==>> Trial = %i rot_speed = %g | move_speed = %g | speed = %g | approach = %g | Condition = %g\n', iii,rot_speed,move_speed,speeds,approach,condition);
@@ -376,7 +403,7 @@ try
 					
 			end
 			
-			if approach ==2   %%ÿ��trial ,ii ,jj ������ʼ��
+			if approach ==2   %%ÿ?�?�trial ,ii ,jj ?�?�?�?�?�?��?�?�?
 				ii = 1;			jj = 1;			kk = 1;			ll = 1;
 				mm = 1;			nn = 1;			oo = 1;			pp = 1;
 				qq = 1;			rr = 1;			ss = 1;			tt = 1;
@@ -424,7 +451,7 @@ try
 								response = -100;
 								breakLoop = true;
 						end
-						ListenChar(0);
+						%ListenChar(0);
 					end
 				end
 				if strcmpi(fixated,'breakfix')
@@ -444,14 +471,14 @@ try
 				Screen('Flip',w);
 				WaitSecs('YieldSecs',0.75);
 			end
-			%if we lost fixation then 
+			%if we lost fixation then
 			if ~strcmpi(fixated,'fix'); continue; end
 			
 			%=========================Our actual stimulus drawing loop==========================
 			if useEyeLink; edfMessage(eL,'END_FIX'); statusMessage(eL,'Show Stimulus...'); end
 			vbl = Screen('Flip',w);
 			vblendtime = vbl + eachConditionSecs;
-			while vbl < vblendtime 
+			while vbl < vblendtime
 				
 				a1 = rad2deg(mod(ang1+(ii-1)*shiftAng,2*pi));
 				r1 = r1Origin + 0.5*r_a*i^2;
@@ -627,7 +654,7 @@ try
 					end %2
 				end %approach
 				
-				%                 if approach == 2   %  ֻΪ�˾�ֹʱ����ʵ��ת����ʵ��
+				%                 if approach == 2   %  ֻΪ?��?�ֹ�?�?�?�?��?�?��?�?�?�?��?�?�?
 				ii = ii+1;				jj = jj+1;
 				kk = kk+1;				ll = ll+1;
 				mm = mm+1;				nn = nn+1;
@@ -681,8 +708,18 @@ try
 			if abandon == 0   %else restart,and don't save data
 				ana.result(1,iii) = numChoice;
 				response = numChoice;
-				iii = iii+1;
+				%---------------------update staircase data
+				if use_staircase
+					if pattern_angle_index(iii) == 1
+						staircase45 = PAL_AMPM_updatePM(staircase45, response);
+					elseif pattern_angle_index(iii) == 2
+						staircase90 = PAL_AMPM_updatePM(staircase90, response);
+					elseif pattern_angle_index(iii) == 3
+						staircase135 = PAL_AMPM_updatePM(staircase135, response);
+					end
+				end
 				doPlot();
+				iii = iii+1;
 			end
 			fprintf('==>> Trial = %i RESPONSE = %.2g\n', thisTrial,response);
 			%log response to eyelink
@@ -697,7 +734,6 @@ try
 				breakLoop = true;
 				break
 			end
-			%---------------------
 		end % END iii <= trials
 		if iii>trials; breakLoop = true; end
 	end % breakLoop
@@ -707,7 +743,12 @@ try
 		cd(ResultDir);
 	end
 	disp(['==>> SAVE, saved current data to: ' pwd]);
-	save([nameExp '.mat'],'ana','eL');
+	if use_staircase
+		save([nameExp '.mat'],'ana','staircase90','staircase45','staircase135','eL');
+	else
+		save([nameExp '.mat'],'ana','eL');
+	end
+	savefig(figH, [nameExp '.fig']);
 	if useEyeLink == true; close(eL); end
 catch ME
 	close(sM);
@@ -719,8 +760,10 @@ end
 		ana.match_value = match_value;
 		ana.angle_pattern = angle_pattern;
 		ana.angle_index = pattern_angle_index;
-		ana.move_speed_index = radial_speed_index;
-		ana.angle_speed_index = rotation_speed_index;
+		if ~use_staircase
+			ana.move_speed_index = radial_speed_index;
+			ana.angle_speed_index = rotation_speed_index;
+		end
 		ana.randArray = column_rank;
 		ana.result = zeros(1,trials);
 		ana.allAngle = gaborAngles;
@@ -753,67 +796,70 @@ end
 		ana.firstFixInit = firstFixInit;
 		ana.firstFixTime = firstFixTime;
 		ana.firstFixRadius = firstFixRadius;
-		ana.strictFixation = strictFixation;	
+		ana.strictFixation = strictFixation;
 	end
 
 	function setupTrial()
 		
 		stopCriterion = 'trials';
-		stopRule = 40;
+		trials = 90;
+		stopRule = 30;
 		usePriors = false;
 		grain = 100;
 		
-		task = stimulusSequence();
-		task.name = nameExp;
-		task.nVar(1).name = 'angle';
-		task.nVar(1).stimulus = [1];
-		task.nVar(1).values = [45 90 135];
-		task.nBlocks = length(task.nVar(1).values) * stopRule;
-		initialise(task);
+		% 		task = stimulusSequence();
+		% 		task.name = nameExp;
+		% 		task.nVar(1).name = 'angle';
+		% 		task.nVar(1).stimulus = [1];
+		% 		task.nVar(1).values = [45 90 135];
+		% 		task.nBlocks = length(task.nVar(1).values) * stopRule;
+		% 		initialise(task);
 		
 		if staircase_use_radial
-			stims = linspace(min(radial_speed_i),max(radial_speed_i),10);
+			stims = linspace(min(radial_speed_i),max(radial_speed_i),grain);
 			priorAlpha90 = linspace(min(radial_speed_i), max(radial_speed_i),grain);
-			priorAlpha45 = linspace(mix(radial_speed_i), max(radial_speed_i),grain);
+			priorAlpha45 = linspace(min(radial_speed_i), max(radial_speed_i),grain);
 			priorAlpha135 = linspace(min(radial_speed_i), max(radial_speed_i),grain);
-			priorBeta = [0.5:0.5:5]; %our slope
-			priorGammaRange = 0.5;  %fixed value (using vector here would make it a free parameter)
+			priorBeta = linspace(0.1, 25,grain); %our slope
+			priorGammaRange = 0.02;  %fixed value (using vector here would make it a free parameter)
 			priorLambdaRange = 0.02; %ditto
 		else
-			stims = linspace(min(rotation_speed_i),max(rotation_speed_i),10);
+			stims = linspace(min(rotation_speed_i),max(rotation_speed_i),grain);
 			priorAlpha90 = linspace(min(rotation_speed_i),max(rotation_speed_i),grain);
 			priorAlpha45 = linspace(min(rotation_speed_i),max(rotation_speed_i),grain);
 			priorAlpha135 = linspace(min(rotation_speed_i),max(rotation_speed_i),grain);
-			priorBeta = [0.5:0.5:5]; %our slope
-			priorGammaRange = 0.5;  %fixed value (using vector here would make it a free parameter)
+			priorBeta = linspace(0.1, 25,grain); %our slope
+			priorGammaRange = 0.02;  %fixed value (using vector here would make it a free parameter)
 			priorLambdaRange = 0.02; %ditto
 		end
 		
-		staircase90 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
+		staircase90 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Logistic,...
 			'priorAlphaRange', priorAlpha90, 'priorBetaRange', priorBeta,...
 			'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
 			'numTrials', stopRule,'marginalize','lapse');
 		
-		staircase45 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
+		staircase45 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Logistic,...
 			'priorAlphaRange', priorAlpha45, 'priorBetaRange', priorBeta,...
 			'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
 			'numTrials', stopRule,'marginalize','lapse');
 		
-		staircase135 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Weibull,...
+		staircase135 = PAL_AMPM_setupPM('stimRange',stims,'PF',@PAL_Logistic,...
 			'priorAlphaRange', priorAlpha135, 'priorBetaRange', priorBeta,...
 			'priorGammaRange',priorGammaRange, 'priorLambdaRange',priorLambdaRange,...
 			'numTrials', stopRule,'marginalize','lapse');
 		
 		if usePriors
-			prior90 = PAL_pdfNormal(priorAlpha90,0,1).*PAL_pdfNormal(priorBeta,2,3);
-			prior45 = PAL_pdfNormal(priorAlpha45,-10,1).*PAL_pdfNormal(priorBeta,2,3);
-			prior135 = PAL_pdfNormal(priorAlpha135,10,1).*PAL_pdfNormal(priorBeta,2,3);
-			% 	figure;
-			% 	subplot(1,3,1);imagesc(staircase90.priorAlphaRange,staircase90.priorBetaRange,prior90);axis square
-			% 	subplot(1,3,2);imagesc(staircase45.priorAlphaRange,staircase45.priorBetaRange,prior45); axis square
-			% 	subplot(1,3,3);imagesc(staircase135.priorAlphaRange,staircase135.priorBetaRange,prior135); axis square
-			% 	xlabel('Threshold');ylabel('Slope');title('Initial Bayesian Priors')
-			staircase90 = PAL_AMPM_setupPM(staircase0,'prior',prior90);
+			prior90 = PAL_pdfNormal(staircase90.priorAlphas,0,20).*PAL_pdfNormal(staircase90.priorBetas,2,1);
+			prior45 = PAL_pdfNormal(staircase45.priorAlphas,0,20).*PAL_pdfNormal(staircase45.priorBetas,2,1);
+			prior135 = PAL_pdfNormal(staircase135.priorAlphas,0,20).*PAL_pdfNormal(staircase135.priorBetas,2,1);
+% 			figure;
+% 			subplot(1,3,1);imagesc(staircase90.priorBetaRange,staircase90.priorAlphaRange,prior90);axis square
+% 			ylabel('Threshold');xlabel('Slope');title('Initial Bayesian Priors 90deg')
+% 			subplot(1,3,2);imagesc(staircase45.priorBetaRange,staircase45.priorAlphaRange,prior45); axis square
+% 			ylabel('Threshold');xlabel('Slope');title('Initial Bayesian Priors 45deg')
+% 			subplot(1,3,3);imagesc(staircase135.priorBetaRange,staircase135.priorAlphaRange,prior135); axis square
+% 			ylabel('Threshold');xlabel('Slope');title('Initial Bayesian Priors 135deg')
+			staircase90 = PAL_AMPM_setupPM(staircase90,'prior',prior90);
 			staircase45 = PAL_AMPM_setupPM(staircase45,'prior',prior45);
 			staircase135 = PAL_AMPM_setupPM(staircase135,'prior',prior135);
 		end
@@ -823,16 +869,112 @@ end
 		if ~isfield(ana,'result') || isempty(ana.result)
 			return
 		end
-		figure(figH);
-		xpl = 1:length(ana.result);
-		plot(xpl, ana.result,'ro','MarkerFaceColor','r','MarkerSize',8);
-		tit = sprintf('NEXT TRIAL:%i', iii);
-		title(tit);
-		box on; grid on; grid minor; ylim([0 3])
-		xlabel('Total Trials');
-		ylabel('Subject Response');
-		hold off;
-		drawnow;
+		if use_staircase
+			figure(figH);
+			subplot(3,1,1)
+			hold on
+			if pattern_angle_index(iii) == 1
+				plot(iii,ana.result(end)+4,'ro','MarkerFaceColor','r','MarkerSize',8);
+			elseif pattern_angle_index(iii) == 2
+				plot(iii,ana.result(end)+2,'go','MarkerFaceColor','g','MarkerSize',8);
+			elseif pattern_angle_index(iii) == 3
+				plot(iii,ana.result(end),'bo','MarkerFaceColor','b','MarkerSize',8);
+			end
+			tit = sprintf('NEXT TRIAL:%i', iii);
+			title(tit);
+			box on; grid on; grid minor; ylim([0 6])
+			xlabel('Total Trials');
+			ylabel('Subject Response');
+			hold off;
+			subplot(3,1,2)
+			if staircase_use_radial
+				if length(staircase45.x)>1 && length(staircase90.x)>1 && length(staircase135.x)>1
+					[SL45, NP45, OON45] = PAL_PFML_GroupTrialsbyX(staircase45.x(1:length(staircase45.x)-1),staircase45.response,ones(size(staircase45.response)));
+					for SR45 = 1:length(SL45(OON45~=0))
+						plot(SL45(SR45),NP45(SR45)/OON45(SR45),'ro','markerfacecolor','r','markersize',20*sqrt(OON45(SR45)./sum(OON45)))
+						hold on
+					end
+					[SL90, NP90, OON90] = PAL_PFML_GroupTrialsbyX(staircase90.x(1:length(staircase90.x)-1),staircase90.response,ones(size(staircase90.response)));
+					for SR90 = 1:length(SL90(OON90~=0))
+						plot(SL90(SR90),NP90(SR90)/OON90(SR90),'go','markerfacecolor','g','markersize',20*sqrt(OON90(SR90)./sum(OON90)))
+						hold on
+					end
+					[SL135, NP135, OON135] = PAL_PFML_GroupTrialsbyX(staircase135.x(1:length(staircase135.x)-1),staircase135.response,ones(size(staircase135.response)));
+					for SR135 = 1:length(SL135(OON135~=0))
+						plot(SL135(SR135),NP135(SR135)/OON135(SR135),'bo','markerfacecolor','b','markersize',20*sqrt(OON135(SR135)./sum(OON135)))
+						hold on
+					end
+					plot(min(radial_speed_i):0.01:max(radial_speed_i),...
+						staircase45.PF([staircase45.threshold(length(staircase45.threshold)), staircase45.slope(length(staircase45.threshold)), 0.02, 0.02],...
+						min(radial_speed_i):0.01:max(radial_speed_i)),'r-','linewidth',2)
+					hold on
+					plot(min(radial_speed_i):0.01:max(radial_speed_i),...
+						staircase90.PF([staircase90.threshold(length(staircase90.threshold)), staircase90.slope(length(staircase90.threshold)), 0.02, 0.02],...
+						min(radial_speed_i):0.01:max(radial_speed_i)),'g-','linewidth',2)
+					hold on
+					plot(min(radial_speed_i):0.01:max(radial_speed_i),...
+						staircase135.PF([staircase135.threshold(length(staircase135.threshold)), staircase135.slope(length(staircase135.threshold)), 0.02, 0.02],...
+						min(radial_speed_i):0.01:max(radial_speed_i)),'b-','linewidth',2)
+					hold off
+				end
+			else
+				if length(staircase45.x)>1 && length(staircase90.x)>1 && length(staircase135.x)>1
+					[SL45, NP45, OON45] = PAL_PFML_GroupTrialsbyX(staircase45.x(1:length(staircase45.x)-1),staircase45.response,ones(size(staircase45.response)));
+					for SR45 = 1:length(SL45(OON45~=0))
+						plot(SL45(SR45),NP45(SR45)/OON45(SR45),'ro','markerfacecolor','r','markersize',20*sqrt(OON45(SR45)./sum(OON45)))
+						hold on
+					end
+					[SL90, NP90, OON90] = PAL_PFML_GroupTrialsbyX(staircase90.x(1:length(staircase90.x)-1),staircase90.response,ones(size(staircase90.response)));
+					for SR90 = 1:length(SL90(OON90~=0))
+						plot(SL90(SR90),NP90(SR90)/OON90(SR90),'go','markerfacecolor','g','markersize',20*sqrt(OON90(SR90)./sum(OON90)))
+						hold on
+					end
+					[SL135, NP135, OON135] = PAL_PFML_GroupTrialsbyX(staircase135.x(1:length(staircase135.x)-1),staircase135.response,ones(size(staircase135.response)));
+					for SR135 = 1:length(SL135(OON135~=0))
+						plot(SL135(SR135),NP135(SR135)/OON135(SR135),'bo','markerfacecolor','b','markersize',20*sqrt(OON135(SR135)./sum(OON135)))
+						hold on
+					end
+					plot(min(rotation_speed_i):0.01:max(rotation_speed_i),...
+						staircase45.PF([staircase45.threshold(length(staircase45.threshold)), staircase45.slope(length(staircase45.threshold)), 0.02, 0.02],...
+						min(rotation_speed_i):0.01:max(rotation_speed_i)),'r-','linewidth',2)
+					hold on
+					plot(min(rotation_speed_i):0.01:max(rotation_speed_i),...
+						staircase90.PF([staircase90.threshold(length(staircase90.threshold)), staircase90.slope(length(staircase90.threshold)), 0.02, 0.02],...
+						min(rotation_speed_i):0.01:max(rotation_speed_i)),'g-','linewidth',2)
+					hold on
+					plot(min(rotation_speed_i):0.01:max(rotation_speed_i),...
+						staircase135.PF([staircase135.threshold(length(staircase135.threshold)), staircase135.slope(length(staircase135.threshold)), 0.02, 0.02],...
+						min(rotation_speed_i):0.01:max(rotation_speed_i)),'b-','linewidth',2)
+					hold off
+				end
+			end
+			subplot(3,1,3)
+			if length(staircase90.threshold) > 1
+				analysisCore.areabar(1:length(staircase90.threshold),staircase90.threshold,staircase90.seThreshold,[0.5 1 0.5],[],'g-');
+				plot(1:length(staircase90.x),staircase90.x,'g');
+			end
+			if length(staircase45.threshold) >1
+				hold on
+				analysisCore.areabar(1:length(staircase45.threshold),staircase45.threshold,staircase45.seThreshold,[1 0.5 0.5],[],'r-');
+				plot(1:length(staircase45.x),staircase45.x,'r');
+			end
+			if length(staircase135.threshold) > 1
+				analysisCore.areabar(1:length(staircase135.threshold),staircase135.threshold,staircase135.seThreshold,[0.5 0.5 1],[],'b-');
+				plot(1:length(staircase135.x),staircase135.x,'b');
+			end
+			hold off
+			drawnow
+		else
+			figure(figH);
+			xpl = 1:length(ana.result);
+			plot(xpl, ana.result,'ro','MarkerFaceColor','r','MarkerSize',8);
+			tit = sprintf('NEXT TRIAL:%i', iii);
+			title(tit);
+			box on; grid on; grid minor; ylim([0 3])
+			xlabel('Total Trials');
+			ylabel('Subject Response');
+			hold off;
+			drawnow;
+		end
 	end
-
 end
