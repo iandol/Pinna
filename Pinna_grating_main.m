@@ -765,7 +765,7 @@ end
 			ana.angle_speed_index = rotation_speed_index;
 		end
 		ana.randArray = column_rank;
-		ana.result = zeros(1,trials);
+% 		ana.result = zeros(1,trials);
 		ana.allAngle = gaborAngles;
 		ana.one_trials = one_trials;
 		ana.moving_speed = radial_speed_i;

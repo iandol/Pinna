@@ -69,39 +69,42 @@ while vbl < vblendtime
     
     %%%%%%%%%%1st ring
     %area1
-    radius1 = round(r1Origin + 0.5*r_a*i^2);
+    radius1(1) = round(r1Origin + 0.5*r_a*i^2);
+	 radius1(2) = round(r1Origin + 0.5*r_a*i^2);
     side1P(1) = round(min_size + 0.5*size_a*i^2);
     side1P(2) = round(min_size + 0.5*size_a*i^2);
-    dstRect1a  = [xc(1)+radius1*sin(mod(ang1+(ii-1)*shiftAng(1),2*pi))-side1P(2)/2;yc(1)-radius1*cos(mod(ang1+(ii-1)*shiftAng(1),2*pi))-side1P(1)/2;...
-        xc(1)+radius1*sin(mod(ang1+(ii-1)*shiftAng(1),2*pi))+side1P(2)/2;yc(1)-radius1*cos(mod(ang1+(ii-1)*shiftAng(1),2*pi))+side1P(1)/2];
+    dstRect1a  = [xc(1)+radius1(1)*sin(mod(ang1+(ii-1)*shiftAng(1),2*pi))-side1P(2)/2;yc(1)-radius1(1)*cos(mod(ang1+(ii-1)*shiftAng(1),2*pi))-side1P(1)/2;...
+        xc(1)+radius1(1)*sin(mod(ang1+(ii-1)*shiftAng(1),2*pi))+side1P(2)/2;yc(1)-radius1(1)*cos(mod(ang1+(ii-1)*shiftAng(1),2*pi))+side1P(1)/2];
     %area2
-    dstRect1b  = [xc(2)+radius1*sin(mod(ang1+(ii-1)*shiftAng(2),2*pi))-side1P(2)/2;yc(1)-radius1*cos(mod(ang1+(ii-1)*shiftAng(2),2*pi))-side1P(1)/2;...
-        xc(2)+radius1*sin(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side1P(2)/2;yc(1)-radius1*cos(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side1P(1)/2];
+    dstRect1b  = [xc(2)+radius1(2)*sin(mod(ang1+(ii-1)*shiftAng(2),2*pi))-side1P(2)/2;yc(1)-radius1(2)*cos(mod(ang1+(ii-1)*shiftAng(2),2*pi))-side1P(1)/2;...
+        xc(2)+radius1(2)*sin(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side1P(2)/2;yc(1)-radius1(2)*cos(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side1P(1)/2];
     
     %%%%%%%%%2 ring
     if num_rings>=2
         %area1
-        radius2 = round(r1Origin + 0.5*r_a*j^2);
+        radius2(1) = round(r1Origin + 0.5*r_a*j^2);
+		  radius2(2) = round(r1Origin + 0.5*r_a*j^2);
         side2P(1) = round(min_size + 0.5*size_a*j^2);
         side2P(2) = round(min_size + 0.5*size_a*j^2);
-        dstRect2a = [xc(1)+radius2*sin(mod(ang2+(ii-1)*shiftAng(1),2*pi))-side2P(2)/2;yc(1)-radius2*cos(mod(ang2+(ii-1)*shiftAng(1),2*pi))-side2P(1)/2;...
-            xc(1)+radius2*sin(mod(ang2+(ii-1)*shiftAng(1),2*pi))+side2P(2)/2;yc(1)-radius2*cos(mod(ang2+(ii-1)*shiftAng(1),2*pi))+side2P(1)/2];
+        dstRect2a = [xc(1)+radius2(1)*sin(mod(ang2+(ii-1)*shiftAng(1),2*pi))-side2P(2)/2;yc(1)-radius2(1)*cos(mod(ang2+(ii-1)*shiftAng(1),2*pi))-side2P(1)/2;...
+            xc(1)+radius2(1)*sin(mod(ang2+(ii-1)*shiftAng(1),2*pi))+side2P(2)/2;yc(1)-radius2(1)*cos(mod(ang2+(ii-1)*shiftAng(1),2*pi))+side2P(1)/2];
         %area2
-        dstRect2b  = [xc(2)+radius2*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side2P(2)/2;yc(1)-radius2*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side2P(1)/2;...
-            xc(2)+radius2*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side2P(2)/2;yc(1)-radius2*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side2P(1)/2];
+        dstRect2b  = [xc(2)+radius2(2)*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side2P(2)/2;yc(1)-radius2(2)*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side2P(1)/2;...
+            xc(2)+radius2(2)*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side2P(2)/2;yc(1)-radius2(2)*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side2P(1)/2];
         
     end
     %%%%%%%%%3 ring
     if num_rings >=3
         %area1
-        radius3 = round(r1Origin + 0.5*r_a*k^2);
+        radius3(1) = round(r1Origin + 0.5*r_a*k^2);
+		  radius3(2) = round(r1Origin + 0.5*r_a*k^2);
         side3P(1) = round(min_size + 0.5*size_a*k^2);
         side3P(2) = round(min_size + 0.5*size_a*k^2);
-        dstRect3a = [xc(1)+radius3*sin(mod(ang1+(ii-1)*shiftAng(1),2*pi))-side3P(2)/2;yc(1)-radius3*cos(mod(ang1+(ii-1)*shiftAng(1),2*pi))-side3P(1)/2;...
-            xc(1)+radius3*sin(mod(ang1+(ii-1)*shiftAng(1),2*pi))+side3P(2)/2;yc(1)-radius3*cos(mod(ang1+(ii-1)*shiftAng(1),2*pi))+side3P(1)/2];
+        dstRect3a = [xc(1)+radius3(1)*sin(mod(ang1+(ii-1)*shiftAng(1),2*pi))-side3P(2)/2;yc(1)-radius3(1)*cos(mod(ang1+(ii-1)*shiftAng(1),2*pi))-side3P(1)/2;...
+            xc(1)+radius3(1)*sin(mod(ang1+(ii-1)*shiftAng(1),2*pi))+side3P(2)/2;yc(1)-radius3(1)*cos(mod(ang1+(ii-1)*shiftAng(1),2*pi))+side3P(1)/2];
         %area2
-        dstRect3b  = [xc(2)+radius3*sin(mod(ang1+(ii-1)*shiftAng(2),2*pi))-side3P(2)/2;yc(1)-radius3*cos(mod(ang1+(ii-1)*shiftAng(2),2*pi))-side3P(1)/2;...
-            xc(2)+radius3*sin(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side3P(2)/2;yc(1)-radius3*cos(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side3P(1)/2];
+        dstRect3b  = [xc(2)+radius3(2)*sin(mod(ang1+(ii-1)*shiftAng(2),2*pi))-side3P(2)/2;yc(1)-radius3(2)*cos(mod(ang1+(ii-1)*shiftAng(2),2*pi))-side3P(1)/2;...
+            xc(2)+radius3(2)*sin(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side3P(2)/2;yc(1)-radius3(2)*cos(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side3P(1)/2];
     end
     %%%%%%%%%4 ring
     if num_rings>=4
@@ -126,53 +129,59 @@ while vbl < vblendtime
             xc(2)+r5*sin(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side5P(2)/2;yc(1)-r5*cos(mod(ang1+(ii-1)*shiftAng(2),2*pi))+side5P(1)/2];
     end
     %%%%%%%%%6 ring
-    if num_rings>=6
-        r6 = round(r1Origin + 0.5*r_a*n^2);
-        side6P(1) = round(min_size + 0.5*size_a*n^2);
-        side6P(2) = round(min_size + 0.5*size_a*n^2);
-        dstRect6a = [xc(1)+r6*sin(mod(ang2+(ii-1)*shiftAng(1),2*pi))-side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(1),2*pi))-side6P(1)/2;...
-            xc(1)+r6*sin(mod(ang2+(ii-1)*shiftAng(1),2*pi))+side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(1),2*pi))+side6P(1)/2];
-        %area2
-        dstRect6b  = [xc(2)+r6*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side6P(1)/2;...
-            xc(2)+r6*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(1)/2];
+	 if num_rings>=6
+		 r6 = round(r1Origin + 0.5*r_a*n^2);
+		 side6P(1) = round(min_size + 0.5*size_a*n^2);
+		 side6P(2) = round(min_size + 0.5*size_a*n^2);
+		 dstRect6a = [xc(1)+r6*sin(mod(ang2+(ii-1)*shiftAng(1),2*pi))-side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(1),2*pi))-side6P(1)/2;...
+			 xc(1)+r6*sin(mod(ang2+(ii-1)*shiftAng(1),2*pi))+side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(1),2*pi))+side6P(1)/2];
+		 %area2
+		 dstRect6b  = [xc(2)+r6*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))-side6P(1)/2;...
+			 xc(2)+r6*sin(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(2)/2;yc(1)-r6*cos(mod(ang2+(ii-1)*shiftAng(2),2*pi))+side6P(1)/2];
 	 end
     
-	 %Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 1]);
-    dstRect1 = [dstRect1a dstRect1b];
-    Screen('DrawTextures',w,eleTexMatch1,[],dstRect1,[(180/pi)*(mod(ang1+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang1+(ii-1)*shiftAng(2),2*pi))],...
-        1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-    if num_rings>=2
-        dstRect2 = [dstRect2a dstRect2b];
-        Screen('DrawTextures',w,eleTexMatch1,[],dstRect2,[(180/pi)*(mod(ang2+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang2+(ii-1)*shiftAng(2),2*pi))],...
-            1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-    end
-    if num_rings>=3
-        dstRect3 = [dstRect3a dstRect3b];
-        Screen('DrawTextures',w,eleTexMatch1,[],dstRect3,[(180/pi)*(mod(ang1+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang1+(ii-1)*shiftAng(2),2*pi))],...
-            1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-    end
-    if num_rings>=4
-        dstRect4 = [dstRect4a dstRect4b];
-        Screen('DrawTextures',w,eleTexMatch1,[],dstRect4,[(180/pi)*(mod(ang2+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang2+(ii-1)*shiftAng(2),2*pi))],...
-            1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-    end
-    if num_rings>=5
-        dstRect5 = [dstRect5a dstRect5b];
-        Screen('DrawTextures',w,eleTexMatch1,[],dstRect5,[(180/pi)*(mod(ang1+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang1+(ii-1)*shiftAng(2),2*pi))],...
-            1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-    end
-    if num_rings>=6
-        dstRect6 = [dstRect6a dstRect6b];
-        Screen('DrawTextures',w,eleTexMatch1,[],dstRect6,[(180/pi)*(mod(ang2+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang2+(ii-1)*shiftAng(2),2*pi))],...
-            1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
-	 end
+% 	 Screen('BlendFunction',w,GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,[1 1 1 1]);
+%     dstRect1 = [dstRect1a dstRect1b];
+%     Screen('DrawTextures',w,eleTexMatch1,[],dstRect1,[(180/pi)*(mod(ang1+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang1+(ii-1)*shiftAng(2),2*pi))],...
+%         1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+%     if num_rings>=2
+%         dstRect2 = [dstRect2a dstRect2b];
+%         Screen('DrawTextures',w,eleTexMatch1,[],dstRect2,[(180/pi)*(mod(ang2+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang2+(ii-1)*shiftAng(2),2*pi))],...
+%             1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+%     end
+%     if num_rings>=3
+%         dstRect3 = [dstRect3a dstRect3b];
+%         Screen('DrawTextures',w,eleTexMatch1,[],dstRect3,[(180/pi)*(mod(ang1+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang1+(ii-1)*shiftAng(2),2*pi))],...
+%             1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+%     end
+%     if num_rings>=4
+%         dstRect4 = [dstRect4a dstRect4b];
+%         Screen('DrawTextures',w,eleTexMatch1,[],dstRect4,[(180/pi)*(mod(ang2+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang2+(ii-1)*shiftAng(2),2*pi))],...
+%             1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+%     end
+%     if num_rings>=5
+%         dstRect5 = [dstRect5a dstRect5b];
+%         Screen('DrawTextures',w,eleTexMatch1,[],dstRect5,[(180/pi)*(mod(ang1+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang1+(ii-1)*shiftAng(2),2*pi))],...
+%             1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+%     end
+%     if num_rings>=6
+%         dstRect6 = [dstRect6a dstRect6b];
+%         Screen('DrawTextures',w,eleTexMatch1,[],dstRect6,[(180/pi)*(mod(ang2+(ii-1)*shiftAng(1),2*pi)) (180/pi)*(mod(ang2+(ii-1)*shiftAng(2),2*pi))],...
+%             1,[],[],[],[],[]); % 0 for nearest neighboring filtering, 1 for bilinear filtering
+% 	 end
 	 %Screen('BlendFunction',w,GL_ONE,GL_ZERO,[1 1 1 1]);
     
     ii = ii+1;
+	 
+% 	 i = i+1; if i == onFrames;	i = 1; end
+% 	 j = j+1;	if j == onFrames;	j = 1; end
+% 	 k = k+1;	if k == onFrames;	k = 1; end
     
 		sM.drawCross(0.3,[0 0 0 1]);
-    Screen('DrawText', w, 'a', wrect(3)/3, wrect(4)/2+200, colorMat(1,:));
-    Screen('DrawText', w, 'b', wrect(3)*2/3, wrect(4)/2+200, colorMat(2,:));
+%     Screen('DrawText', w, 'a', wrect(3)/3, wrect(4)/2+200, colorMat(1,:));
+%     Screen('DrawText', w, 'b', wrect(3)*2/3, wrect(4)/2+200, colorMat(2,:));
+	 Screen('DrawText', w, 'Contraction', wrect(3)/3, wrect(4)/2, colorMat(1,:));
+    Screen('DrawText', w, 'Expansion', wrect(3)*2/3, wrect(4)/2, colorMat(2,:));
 
     vbl = Screen('Flip', w, vbl + ana.halfifi);
 
@@ -189,18 +198,18 @@ while vbl < vblendtime
 		end
     
     if keycode(spa)
-        numChoice = 1;  %real angle speed ,no CCW and CW
+        numChoice = 0;  %real angle speed ,no CCW and CW
         flag = 1;
 				abandon = 0;
 		end
 		
     if keycode(spb)
-        numChoice = 2;  %real angle speed ,no CCW and CW
+        numChoice = 1;  %real angle speed ,no CCW and CW
         flag = 1;
 				abandon = 0;
     end
     
-    if keycode(ok) & flag == 1
+    if keycode(ok) && flag == 1
        break
     end
     
