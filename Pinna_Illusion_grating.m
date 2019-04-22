@@ -1,31 +1,39 @@
 function Pinna_Illusion_grating(radial_speed, rotary_speed)
 
-Screen('Preference', 'SkipSyncTests', 1);
+if ~exist('radial_speed','var'); radial_speed = 5;end
+if ~exist('rotary_speed','var'); rotary_speed = 0;end
+
+%----------compatibility for windows
+%if ispc; PsychJavaTrouble(); end
+KbName('UnifyKeyNames');
+
+%-----------------------open the PTB screens------------------------
 PsychDefaultSetup(2);
+Screen('Preference', 'SkipSyncTests', 0);
+%===================open our screen====================
+sM = screenManager();
+sM.pixelsPerCm = 35;
+sM.distance = 57.3;
+sM.windowed = [0 0 1000 1000];
+sM.debug = false;
+sM.blend = true;
+%sM.bitDepth = 'FloatingPoint32Bit';
+sM.backgroundColour = [0.5 0.5 0.5];
+sM.movieSettings.record = true;
+screenVals = sM.open; % OPEN THE SCREEN
+fprintf('\n--->>> Pinna Opened Screen %i : %s\n', sM.win, sM.fullName);
 
-screenid = max(Screen('Screens'));
-PsychImaging('PrepareConfiguration');
-PsychImaging('AddTask', 'General', 'FloatingPoint32BitIfPossible');
+sM.prepareMovie();
 
-% [win, winRect] = PsychImaging('OpenWindow', screenid, 0.5, [600, 200, 1300, 900]);
-[win, winRect] = PsychImaging('OpenWindow', screenid, 0.5);
+win = sM.win; winRect = sM.winRect; ifi = screenVals.ifi; ppd = sM.ppd;
 
-ifi = Screen('GetFlipInterval',win);
 [win_w, ~] = RectSize(winRect);
 [center(1), center(2)] = RectCenter(winRect);
 
-pixelsPerCm = 35;
-sizePixel = 10/pixelsPerCm; %mm
-viewDistance = 570; %mm
-ScreenWidth = round(winRect(3)*sizePixel);
-ppd = winRect(3)/2/atand(ScreenWidth/2/viewDistance);
 xCen = winRect(3)/2;
 yCen = winRect(4)/2;
 
-fix_r = 0.15 ; % radius of fixation point (deg)
-fix_cord = [center-fix_r*ppd center+fix_r*ppd];
-
-tilt_angle = 0; %degree
+tilt_angle = 45; %degree
 ring_num = 12;
 patchNum_perRing = 25;
 min_radius = 0.4; %degree
@@ -40,23 +48,7 @@ ang2 = deg2rad(ang2);
 
 ang_total = repmat([ang1; ang2], ring_num, 1);
 
-sti_duriation = 15; %second
-
-if nargin < 1
-    radial_speed = [];
-end
-
-if isempty(radial_speed)
-    radial_speed = 5; %deg
-end
-
-if nargin < 2
-    rotary_speed = [];
-end
-
-if isempty(rotary_speed)
-    rotary_speed = 30; %deg
-end
+sti_duriation = 5; %second
 
 is_mask_outer = 1;
 is_mask_inner = 1;
@@ -137,7 +129,28 @@ try
     
     while vbl < vblendtime
         
-        for i = 1:ring_num
+        Screen('BlendFunction', win, GL_ONE, GL_ONE);
+        Screen('DrawTextures', win, gabortex,[], dstRect, (180-tilt_angle-grating_rotAngle_total), [], [], [], [], kPsychDontDoRotation, Gabor_parameters);
+        
+        if is_mask_outer == 1 && is_mask_inner == 1
+            Screen('BlendFunction', win, GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA, [1 1 1 0]);
+            Screen('DrawTexture', win, masktex);
+			Screen('DrawTexture', win, masktex2);
+            %Screen('BlendFunction', win, GL_ONE,GL_ZERO, [1 1 1 1]);
+		elseif is_mask_outer == 1 && is_mask_inner == 0
+            Screen('BlendFunction', win, GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA, [1 1 1 0]);
+            Screen('DrawTexture', win, masktex);
+            %Screen('BlendFunction', win, GL_ONE,GL_ZERO, [1 1 1 1]);
+		elseif is_mask_outer == 0 && is_mask_inner == 1
+            Screen('BlendFunction', win, GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA, [1 1 1 0]);
+            Screen('DrawTexture', win, masktex2);
+            %Screen('BlendFunction', win, GL_ONE,GL_ZERO, [1 1 1 1]);
+		end
+        
+        sM.drawCross(0.3,[1 0 0]);
+		sM.finishDrawing();
+		
+		for i = 1:ring_num
             grating_rotAngle = rad2deg(mod(ang_total(i,:)+(n_rotary(i)-1)*rotary_speed_perFrame,2*pi));
             grating_rotAngle_total(:,((i-1)*patchNum_perRing+1):(i*patchNum_perRing)) = grating_rotAngle;
             R = min_radius_pixel + 0.5*diff_r*n_radial(i)^2;
@@ -147,23 +160,8 @@ try
                 xCen+R*sind(grating_rotAngle)+S/2; yCen-R*cosd(grating_rotAngle)+S/2];
         end
         
-        Screen('BlendFunction', win, GL_ONE, GL_ONE);
-        Screen('DrawTextures', win, gabortex,[], dstRect, (180-tilt_angle-grating_rotAngle_total), [], [], [], [], kPsychDontDoRotation, Gabor_parameters);
-        
-        if is_mask_outer == 1
-            Screen('BlendFunction', win, GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA, [1 1 1 0]);
-            Screen('DrawTexture', win, masktex);
-            Screen('BlendFunction', win, GL_ONE,GL_ZERO, [1 1 1 1]);
-        end
-        if is_mask_inner == 1
-            Screen('BlendFunction', win, GL_ONE_MINUS_SRC_ALPHA,GL_SRC_ALPHA, [1 1 1 0]);
-            Screen('DrawTexture', win, masktex2);
-            Screen('BlendFunction', win, GL_ONE,GL_ZERO, [1 1 1 1]);
-        end
-        
-        Screen('FillOval', win, [1, 0, 0], fix_cord);
-        
-        vbl = Screen('Flip', win);
+        vbl = Screen('Flip', win, vbl + screenVals.halfisi);
+		sM.addMovieFrame();
         
         n_rotary = n_rotary + 1;
         if radial_speed_judgement == 1
@@ -174,13 +172,15 @@ try
             n_radial(n_radial == 0) = onFrames;
         end
         
-        if KbCheck
+        if KbCheck(-1)
             break
         end
-    end
-    sca;
+	end
+	sM.finaliseMovie();
+    sM.close;
 catch
-    sca;
+    sM.close;
+	sca;
 end
 
 end
